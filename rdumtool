@@ -85,10 +85,10 @@ class Response:
         'watts': ('Watts', 6, 4, lambda x: x / 1000),
         'temp_c': ('Temperature (Celsius)', 10, 2, lambda x: x),
         'temp_f': ('Temperature (Fahrenheit)', 12, 2, lambda x: x),
-        'data_group_selected': ('Currently selected data group', 15, 1, lambda x: x),
+        'data_group_selected': ('Currently selected data group', 14, 2, lambda x: x),
         'data_line_positive_volts': ('Positive data line volts', 96, 2, lambda x: x / 100),
         'data_line_negative_volts': ('Negative data line volts', 98, 2, lambda x: x / 100),
-        'charging_mode': ('Charging mode', 100, 1, lambda x: x),
+        'charging_mode': ('Charging mode', 100, 2, lambda x: x),
         'record_amps': ('Recorded amps', 102, 4, lambda x: x / 1000),
         'record_watts': ('Recorded watts', 106, 4, lambda x: x / 1000),
         'record_threshold': ('Recording threshold (Amps)', 110, 2, lambda x: x / 100),
@@ -97,7 +97,7 @@ class Response:
         'screen_timeout': ('Screen timeout (Minutes)', 118, 2, lambda x: x),
         'screen_brightness': ('Screen brightness', 120, 2, lambda x: x),
         'resistance': ('Resistance (Ohms)', 122, 4, lambda x: x / 10),
-        'screen_selected': ('Currently selected screen', 127, 1, lambda x: x),
+        'screen_selected': ('Currently selected screen', 126, 2, lambda x: x),
     }
 
     def __init__(self, data=None):
