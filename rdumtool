@@ -1,0 +1,260 @@
+#!/usr/bin/env python3
+
+# rdumtool
+# Copyright (C) 2019 Ryan Finnie
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+
+import argparse
+import struct
+import sys
+import os
+import json
+
+__version__ = '1.0'
+
+
+class DeviceBluetooth:
+    def __init__(self, mac):
+        import bluetooth
+
+        self.dev = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        self.dev.connect((mac, 1))
+
+    def send(self, data):
+        self.dev.send(data)
+
+    def recv(self):
+        data = b''
+        while(len(data) < 130):
+            data += self.dev.recv(1024)
+        return data
+
+
+class DeviceSerial:
+    def __init__(self, fn):
+        import serial
+
+        self.dev = serial.Serial()
+        self.dev.port = fn
+        self.dev.baudrate = 9600
+        self.dev.parity = 'N'
+        self.dev.writeTimeout = 0
+        self.dev.open()
+
+    def send(self, data):
+        self.dev.write(data)
+
+    def recv(self):
+        data = b''
+        while(len(data) < 130):
+            data += self.dev.read()
+        return data
+
+
+class DataGroup:
+    group = 0
+    amp_hours = 0
+    watt_hours = 0
+
+    def __init__(self, group=0):
+        self.group = group
+
+
+class Response:
+    CHARGING_UNKNOWN = 0
+    CHARGING_QC2 = 1
+    CHARGING_QC3 = 2
+
+    _std_defs = {
+        'volts': ('Volts', 2, 2, lambda x: x / 100),
+        'amps': ('Amps', 4, 2, lambda x: x / 1000),
+        'watts': ('Watts', 6, 4, lambda x: x / 1000),
+        'temp_c': ('Temperature (Celsius)', 10, 2, lambda x: x),
+        'temp_f': ('Temperature (Fahrenheit)', 12, 2, lambda x: x),
+        'data_group_selected': ('Currently selected data group', 15, 1, lambda x: x),
+        'data_line_positive_volts': ('Positive data line volts', 96, 2, lambda x: x / 100),
+        'data_line_negative_volts': ('Negative data line volts', 98, 2, lambda x: x / 100),
+        'charging_mode': ('Charging mode', 100, 1, lambda x: x),
+        'record_amps': ('Recorded amps', 102, 4, lambda x: x / 1000),
+        'record_watts': ('Recorded watts', 106, 4, lambda x: x / 1000),
+        'record_threshold': ('Recording threshold (Amps)', 110, 2, lambda x: x / 100),
+        'record_seconds': ('Recorded time (Seconds)', 112, 4, lambda x: x),
+        'recording': ('Recording', 116, 2, lambda x: bool(x)),
+        'screen_timeout': ('Screen timeout (Minutes)', 118, 2, lambda x: x),
+        'screen_brightness': ('Screen brightness', 120, 2, lambda x: x),
+        'resistance': ('Resistance (Ohms)', 122, 4, lambda x: x / 10),
+        'screen_selected': ('Currently selected screen', 127, 1, lambda x: x),
+    }
+
+    def __init__(self, data=None):
+        for name in self._std_defs:
+            setattr(self, name, 0)
+        self.data_groups = [DataGroup(x) for x in range(10)]
+        self.labels = {x: self._std_defs[x][0] for x in self._std_defs}
+        self.labels['data_groups'] = 'Data groups'
+
+        if data:
+            self.parse_binary(data)
+
+    def parse_binary(self, data):
+        for name in self._std_defs:
+            pos = self._std_defs[name][1]
+            pos_len = self._std_defs[name][2]
+            if pos_len == 2:
+                pack_format = '>H'
+            elif pos_len == 4:
+                pack_format = '>L'
+            else:
+                pack_format = 'B'
+            conversion = self._std_defs[name][3]
+            val = conversion(struct.unpack(pack_format, data[pos:pos+pos_len])[0])
+            setattr(self, name, val)
+
+        self.data_groups = []
+        for i in range(10):
+            data_group = DataGroup(i)
+            pos = 16 + (i * 8)
+            data_group.amp_hours = struct.unpack('>L', data[pos:pos+4])[0] / 1000
+            data_group.watt_hours = struct.unpack('>L', data[pos:pos+4])[0] / 1000
+            self.data_groups.append(data_group)
+
+
+def parse_args(argv=None):
+    """Parse user arguments."""
+    if argv is None:
+        argv = sys.argv
+
+    parser = argparse.ArgumentParser(
+        description='rdumtool ({})'.format(__version__),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        prog=os.path.basename(argv[0]),
+    )
+
+    parser.add_argument(
+        '--version', '-V', action='version',
+        version=__version__,
+        help='report the program version',
+    )
+
+    device_group = parser.add_mutually_exclusive_group(required=True)
+    device_group.add_argument(
+        '--bluetooth-device', '-d',
+        help='Bluetooth MAC address of the UM24C',
+    )
+    device_group.add_argument(
+        '--serial-device', '-s',
+        help='Serial filename (e.g. /dev/rfcomm0) of the UM24C',
+    )
+    parser.add_argument(
+        '--json', action='store_true',
+        help='Output JSON data',
+    )
+    parser.add_argument(
+        '--next-screen', action='store_true',
+        help='Go to the next screen on the display',
+    )
+    parser.add_argument(
+        '--rotate-screen', action='store_true',
+        help='Rotate the screen 90 degrees clockwise',
+    )
+    parser.add_argument(
+        '--next-data-group', action='store_true',
+        help='Change to the next data group',
+    )
+    parser.add_argument(
+        '--clear-data-group', action='store_true',
+        help='Clear the current data group',
+    )
+    parser.add_argument(
+        '--set-record-threshold', type=float, choices=[x / 100 for x in range(31)], default=None,
+        help='Set the recording threshold (0.00-0.30 amps, inclusive)',
+    )
+    parser.add_argument(
+        '--set-screen-brightness', type=int, choices=range(6), default=None,
+        help='Set the screen brightness (0-5, inclusive)',
+    )
+    parser.add_argument(
+        '--set-screen-timeout', type=int, choices=range(10), default=None,
+        help='Set the screen timeout (0-9 minutes, inclusive)',
+    )
+
+    args = parser.parse_args(args=argv[1:])
+    return args
+
+
+def main():
+    args = parse_args()
+
+    if args.bluetooth_device:
+        dev = DeviceBluetooth(args.bluetooth_device)
+    else:
+        dev = DeviceSerial(args.serial_device)
+
+    commands = b''
+    for arg, command_val in {
+        'next_screen': b'\xf1',
+        'rotate_screen': b'\xf2',
+        'next_data_group': b'\xf3',
+        'clear_data_group': b'\xf4',
+        'set_record_threshold': lambda x: bytes([0xb0 + int(x * 100)]),
+        'set_screen_brightness': lambda x: bytes([0xd0 + x]),
+        'set_screen_timeout': lambda x: bytes([0xe0 + x]),
+    }.items():
+        arg_val = getattr(args, arg)
+        if (arg_val is None) or (arg_val is False):
+            continue
+        print('{} {}'.format(arg, getattr(args, arg)))
+        if type(command_val) != bytes:
+            command_val = command_val(getattr(args, arg))
+        commands += command_val
+    if commands:
+        dev.send(commands)
+        return
+
+    dev.send(b'\xf0')
+    response = Response(dev.recv())
+
+    if args.json:
+        out = {x: getattr(response, x) for x in response.labels}
+        out['data_groups'] = [{'amp_hours': x.amp_hours, 'watt_hours': x.watt_hours} for x in out['data_groups']]
+        print(json.dumps(out))
+        return
+
+    for name in sorted(response.labels, key=lambda x: response.labels[x]):
+        if name in ('data_group_selected', 'data_groups'):
+            continue
+        value = getattr(response, name)
+        if name == 'charging_mode':
+            value = {
+                response.CHARGING_UNKNOWN: 'Unknown (normal)',
+                response.CHARGING_QC2: 'Quick Charge 2.0',
+                response.CHARGING_QC3: 'Quick Charge 3.0',
+            }[value]
+        print('{}: {}'.format(response.labels[name], value))
+    print()
+    print('Data Groups:')
+    for data_group in response.data_groups:
+        print('{}{}: {}Wh, {}Ah'.format(
+            data_group.group,
+            (' (selected)' if data_group.group == response.data_group_selected else ''),
+            data_group.watt_hours,
+            data_group.amp_hours,
+        ))
+
+
+if __name__ == '__main__':
+    main()
