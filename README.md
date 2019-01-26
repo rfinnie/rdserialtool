@@ -36,7 +36,7 @@ $ rdumtool --bluetooth-device=00:90:72:56:98:D7
 Alternatively, with [pyserial](https://pypi.org/project/pyserial/) required, you can bind it to a serial device:
 
 ```
-sudo rfcomm bind 0 00:90:72:56:98:D7
+$ sudo rfcomm bind 0 00:90:72:56:98:D7
 $ rdumtool --serial-device=/dev/rfcomm0
 ```
 
@@ -45,9 +45,9 @@ Without any additional arguments, rdumtool will display all information availabl
 ## Example
 
 ```
-$ ./rdumtool --bluetooth-device=00:90:72:56:98:D7 --rotate-screen --set-record-threshold=0.20
+$ rdumtool --bluetooth-device=00:90:72:56:98:D7 --rotate-screen --set-record-threshold=0.20
 
-$ ./rdumtool --bluetooth-device=00:90:72:56:98:D7
+$ rdumtool --bluetooth-device=00:90:72:56:98:D7
 Amps: 0.026
 Charging mode: Unknown (normal)
 Currently selected screen: 1
