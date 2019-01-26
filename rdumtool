@@ -236,26 +236,68 @@ def main():
         print(json.dumps(out))
         return
 
-    for name in sorted(response.labels, key=lambda x: response.labels[x]):
-        if name in ('data_group_selected', 'data_groups'):
-            continue
-        value = getattr(response, name)
-        if name == 'charging_mode':
-            value = {
-                response.CHARGING_UNKNOWN: 'Unknown (normal)',
-                response.CHARGING_QC2: 'Quick Charge 2.0',
-                response.CHARGING_QC3: 'Quick Charge 3.0',
-            }[value]
-        print('{}: {}'.format(response.labels[name], value))
+    print('rdumtool {}'.format(__version__))
+    print('Copyright (C) 2019 Ryan Finnie')
     print()
-    print('Data Groups:')
-    for data_group in response.data_groups:
-        print('{}{}: {}Wh, {}Ah'.format(
+    charging_map = {
+        response.CHARGING_UNKNOWN: 'unknown (normal)',
+        response.CHARGING_QC2: 'Quick Charge 2.0',
+        response.CHARGING_QC3: 'Quick Charge 3.0',
+    }
+    print('USB: {:5.02f}V, {:6.03f}A, {:6.03f}W, {:6.01f}Ω'.format(
+        response.volts,
+        response.amps,
+        response.watts,
+        response.resistance
+    ))
+    print('Data: {:5.02f}V(+), {:5.02f}V(-), charging mode: {}'.format(
+        response.data_line_positive_volts,
+        response.data_line_negative_volts,
+        charging_map[response.charging_mode]
+    ))
+    print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:4d} sec at >= {:4.02f}A'.format(
+        '(on)' if response.recording else '(off)',
+        response.record_amps,
+        response.record_watts,
+        response.record_seconds,
+        response.record_threshold,
+    ))
+
+    def make_dgpart(data_group, data_group_selected):
+        return '{}{:d}: {:8.03f}Ah, {:8.03f}Wh'.format(
+            '*' if data_group.group == data_group_selected else ' ',
             data_group.group,
-            (' (selected)' if data_group.group == response.data_group_selected else ''),
-            data_group.watt_hours,
             data_group.amp_hours,
-        ))
+            data_group.watt_hours,
+        )
+    print('Data groups:')
+    print('    {:32}{}'.format(
+      make_dgpart(response.data_groups[0], response.data_group_selected),
+      make_dgpart(response.data_groups[5], response.data_group_selected),
+    ))
+    print('    {:32}{}'.format(
+      make_dgpart(response.data_groups[1], response.data_group_selected),
+      make_dgpart(response.data_groups[6], response.data_group_selected),
+    ))
+    print('    {:32}{}'.format(
+      make_dgpart(response.data_groups[2], response.data_group_selected),
+      make_dgpart(response.data_groups[7], response.data_group_selected),
+    ))
+    print('    {:32}{}'.format(
+      make_dgpart(response.data_groups[3], response.data_group_selected),
+      make_dgpart(response.data_groups[8], response.data_group_selected),
+    ))
+    print('    {:32}{}'.format(
+      make_dgpart(response.data_groups[4], response.data_group_selected),
+      make_dgpart(response.data_groups[9], response.data_group_selected),
+    ))
+
+    print('Temp: {:3d}C ({:3d}F)'.format(response.temp_c, response.temp_f))
+    print('Screen: {:d}/6, brightness: {:d}/5, timeout: {}'.format(
+        response.screen_selected,
+        response.screen_brightness,
+        '{:d} min'.format(response.screen_timeout) if response.screen_timeout else 'off',
+    ))
 
 
 if __name__ == '__main__':

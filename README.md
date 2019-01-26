@@ -48,35 +48,20 @@ Without any additional arguments, rdumtool will display all information availabl
 $ rdumtool --bluetooth-device=00:90:72:56:98:D7 --rotate-screen --set-record-threshold=0.20
 
 $ rdumtool --bluetooth-device=00:90:72:56:98:D7
-Amps: 0.026
-Charging mode: Unknown (normal)
-Currently selected screen: 1
-Negative data line volts: 0.0
-Positive data line volts: 0.0
-Recorded amps: 0.0
-Recorded time (Seconds): 0
-Recorded watts: 0.0
-Recording: False
-Recording threshold (Amps): 0.2
-Resistance (Ohms): 196.5
-Screen brightness: 3
-Screen timeout (Minutes): 2
-Temperature (Celsius): 24
-Temperature (Fahrenheit): 75
-Volts: 5.11
-Watts: 0.132
+rdumtool 1.0
+Copyright (C) 2019 Ryan Finnie
 
-Data Groups:
-0 (selected): 0.139Wh, 0.139Ah
-1: 0.0Wh, 0.0Ah
-2: 0.0Wh, 0.0Ah
-3: 0.0Wh, 0.0Ah
-4: 0.0Wh, 0.0Ah
-5: 0.0Wh, 0.0Ah
-6: 0.0Wh, 0.0Ah
-7: 0.0Wh, 0.0Ah
-8: 0.0Wh, 0.0Ah
-9: 0.0Wh, 0.0Ah
+USB:  5.08V,  0.166A,  0.843W,   30.6Ω
+Data:  2.99V(+),  0.00V(-), charging mode: unknown (normal)
+Recording (on) :    0.009Ah,    0.046Wh,  197 sec at >= 0.20A
+Data groups:
+     0:    0.015Ah,    0.077Wh       5:    0.000Ah,    0.000Wh
+     1:    0.000Ah,    0.000Wh       6:    0.000Ah,    0.000Wh
+    *2:    0.040Ah,    0.204Wh       7:    0.000Ah,    0.000Wh
+     3:    0.000Ah,    0.000Wh       8:    0.000Ah,    0.000Wh
+     4:    0.000Ah,    0.000Wh       9:    0.000Ah,    0.000Wh
+Temp:  25C ( 77F)
+Screen: 1/6, brightness: 5/5, timeout: 2 min
 ```
 
 ## Miscellaneous
