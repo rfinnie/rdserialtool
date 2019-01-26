@@ -131,7 +131,7 @@ class Response:
             data_group = DataGroup(i)
             pos = 16 + (i * 8)
             data_group.amp_hours = struct.unpack('>L', data[pos:pos+4])[0] / 1000
-            data_group.watt_hours = struct.unpack('>L', data[pos:pos+4])[0] / 1000
+            data_group.watt_hours = struct.unpack('>L', data[pos+4:pos+8])[0] / 1000
             self.data_groups.append(data_group)
 
 
