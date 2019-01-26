@@ -111,6 +111,8 @@ class Response:
             self.parse_binary(data)
 
     def parse_binary(self, data):
+        if data[0:2] != b'\x09\x63' or data[-2:] != b'\xff\xf1':
+            raise ValueError('Invalid start/stop markers', data)
         for name in self._std_defs:
             pos = self._std_defs[name][1]
             pos_len = self._std_defs[name][2]
