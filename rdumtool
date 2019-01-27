@@ -32,10 +32,18 @@ __version__ = '1.0'
 
 
 class DeviceBluetooth:
-    def __init__(self, mac):
+    def __init__(self, mac=None):
         import bluetooth
+        self.bluetooth = bluetooth
 
-        self.dev = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        if mac is not None:
+            self.connect(mac)
+
+    def scan(self):
+        return self.bluetooth.discover_devices(duration=8, lookup_names=True, lookup_class=True)
+
+    def connect(self, mac):
+        self.dev = self.bluetooth.BluetoothSocket(self.bluetooth.RFCOMM)
         self.dev.connect((mac, 1))
 
     def send(self, data):
@@ -160,7 +168,6 @@ def parse_args(argv=None):
         help='report the program version',
     )
 
-    device_group = parser.add_mutually_exclusive_group(required=True)
     parser.add_argument(
         '--quiet', '-q', action='store_true',
         help='Whether to display human-readable information to stderr',
@@ -169,6 +176,7 @@ def parse_args(argv=None):
         '--debug', action='store_true',
         help='Print extra debugging information.',
     )
+    device_group = parser.add_mutually_exclusive_group(required=False)
     device_group.add_argument(
         '--bluetooth-device', '-d',
         help='Bluetooth MAC address of the UM24C',
@@ -329,13 +337,26 @@ class RDUMTool:
         logging.info('Copyright (C) 2019 Ryan Finnie')
         logging.info('')
 
-        logging.info('Connecting to {}'.format(
-            self.args.bluetooth_device if self.args.bluetooth_device else self.args.serial_device
-        ))
         if self.args.bluetooth_device:
+            logging.info('Connecting to {}'.format(self.args.bluetooth_device))
             self.dev = DeviceBluetooth(self.args.bluetooth_device)
-        else:
+        elif self.args.serial_device:
+            logging.info('Connecting to {}'.format(self.args.serial_device))
             self.dev = DeviceSerial(self.args.serial_device)
+        else:
+            logging.info('Searching for Bluetooth devices, please wait')
+            self.dev = DeviceBluetooth()
+            suitable_mac = None
+            for mac, name, bt_class in self.dev.scan():
+                logging.info('    {} - {}'.format(mac, name))
+                if name == 'UM24C':
+                    suitable_mac = mac
+            if suitable_mac:
+                logging.info('Connecting to {}'.format(suitable_mac))
+                self.dev.connect(suitable_mac)
+            else:
+                logging.error('No suitable Bluetooth device found')
+                return
         logging.info('Connection established')
         logging.info('')
 
