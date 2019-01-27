@@ -23,6 +23,9 @@ import struct
 import sys
 import os
 import json
+import time
+import datetime
+import traceback
 
 __version__ = '1.0'
 
@@ -89,8 +92,8 @@ class Response:
         'data_line_positive_volts': ('Positive data line volts', 96, 2, lambda x: x / 100),
         'data_line_negative_volts': ('Negative data line volts', 98, 2, lambda x: x / 100),
         'charging_mode': ('Charging mode', 100, 2, lambda x: x),
-        'record_amps': ('Recorded amps', 102, 4, lambda x: x / 1000),
-        'record_watts': ('Recorded watts', 106, 4, lambda x: x / 1000),
+        'record_amphours': ('Recorded amp-hours', 102, 4, lambda x: x / 1000),
+        'record_watthours': ('Recorded watt-hours', 106, 4, lambda x: x / 1000),
         'record_threshold': ('Recording threshold (Amps)', 110, 2, lambda x: x / 100),
         'record_seconds': ('Recorded time (Seconds)', 112, 4, lambda x: x),
         'recording': ('Recording', 116, 2, lambda x: bool(x)),
@@ -100,12 +103,14 @@ class Response:
         'screen_selected': ('Currently selected screen', 126, 2, lambda x: x),
     }
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, collection_time=None):
+        self.collection_time = collection_time
         for name in self._std_defs:
             setattr(self, name, 0)
         self.data_groups = [DataGroup(x) for x in range(10)]
         self.labels = {x: self._std_defs[x][0] for x in self._std_defs}
         self.labels['data_groups'] = 'Data groups'
+        self.labels['collection_time'] = 'Collection time'
 
         if data:
             self.parse_binary(data)
@@ -166,6 +171,10 @@ def parse_args(argv=None):
         help='Output JSON data',
     )
     parser.add_argument(
+        '--watch', type=float, const=2.0, nargs='?', default=None,
+        help='Repeat every WATCH seconds',
+    )
+    parser.add_argument(
         '--next-screen', action='store_true',
         help='Go to the next screen on the display',
     )
@@ -198,107 +207,134 @@ def parse_args(argv=None):
     return args
 
 
-def main():
-    args = parse_args()
-
-    if args.bluetooth_device:
-        dev = DeviceBluetooth(args.bluetooth_device)
-    else:
-        dev = DeviceSerial(args.serial_device)
-
-    commands = b''
-    for arg, command_val in {
-        'next_screen': b'\xf1',
-        'rotate_screen': b'\xf2',
-        'next_data_group': b'\xf3',
-        'clear_data_group': b'\xf4',
-        'set_record_threshold': lambda x: bytes([0xb0 + int(x * 100)]),
-        'set_screen_brightness': lambda x: bytes([0xd0 + x]),
-        'set_screen_timeout': lambda x: bytes([0xe0 + x]),
-    }.items():
-        arg_val = getattr(args, arg)
-        if (arg_val is None) or (arg_val is False):
-            continue
-        print('{} {}'.format(arg, getattr(args, arg)))
-        if type(command_val) != bytes:
-            command_val = command_val(getattr(args, arg))
-        commands += command_val
-    if commands:
-        dev.send(commands)
-        return
-
-    dev.send(b'\xf0')
-    response = Response(dev.recv())
-
-    if args.json:
+class RDUMTool:
+    def print_json(self, response):
         out = {x: getattr(response, x) for x in response.labels}
         out['data_groups'] = [{'amp_hours': x.amp_hours, 'watt_hours': x.watt_hours} for x in out['data_groups']]
+        out['collection_time'] = (out['collection_time'] - datetime.datetime.fromtimestamp(0)).total_seconds()
         print(json.dumps(out))
-        return
 
-    print('rdumtool {}'.format(__version__))
-    print('Copyright (C) 2019 Ryan Finnie')
-    print()
-    charging_map = {
-        response.CHARGING_UNKNOWN: 'unknown (normal)',
-        response.CHARGING_QC2: 'Quick Charge 2.0',
-        response.CHARGING_QC3: 'Quick Charge 3.0',
-    }
-    print('USB: {:5.02f}V, {:6.03f}A, {:6.03f}W, {:6.01f}Ω'.format(
-        response.volts,
-        response.amps,
-        response.watts,
-        response.resistance
-    ))
-    print('Data: {:5.02f}V(+), {:5.02f}V(-), charging mode: {}'.format(
-        response.data_line_positive_volts,
-        response.data_line_negative_volts,
-        charging_map[response.charging_mode]
-    ))
-    print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:4d} sec at >= {:4.02f}A'.format(
-        '(on)' if response.recording else '(off)',
-        response.record_amps,
-        response.record_watts,
-        response.record_seconds,
-        response.record_threshold,
-    ))
+    def print_human(self, response):
+        charging_map = {
+            response.CHARGING_UNKNOWN: 'unknown (normal)',
+            response.CHARGING_QC2: 'Quick Charge 2.0',
+            response.CHARGING_QC3: 'Quick Charge 3.0',
+        }
+        print('USB: {:5.02f}V, {:6.03f}A, {:6.03f}W, {:6.01f}Ω'.format(
+            response.volts,
+            response.amps,
+            response.watts,
+            response.resistance
+        ))
+        print('Data: {:5.02f}V(+), {:5.02f}V(-), charging mode: {}'.format(
+            response.data_line_positive_volts,
+            response.data_line_negative_volts,
+            charging_map[response.charging_mode]
+        ))
+        print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:4d} sec at >= {:4.02f}A'.format(
+            '(on)' if response.recording else '(off)',
+            response.record_amphours,
+            response.record_watthours,
+            response.record_seconds,
+            response.record_threshold,
+        ))
 
-    def make_dgpart(data_group, data_group_selected):
-        return '{}{:d}: {:8.03f}Ah, {:8.03f}Wh'.format(
-            '*' if data_group.group == data_group_selected else ' ',
-            data_group.group,
-            data_group.amp_hours,
-            data_group.watt_hours,
-        )
-    print('Data groups:')
-    print('    {:32}{}'.format(
-      make_dgpart(response.data_groups[0], response.data_group_selected),
-      make_dgpart(response.data_groups[5], response.data_group_selected),
-    ))
-    print('    {:32}{}'.format(
-      make_dgpart(response.data_groups[1], response.data_group_selected),
-      make_dgpart(response.data_groups[6], response.data_group_selected),
-    ))
-    print('    {:32}{}'.format(
-      make_dgpart(response.data_groups[2], response.data_group_selected),
-      make_dgpart(response.data_groups[7], response.data_group_selected),
-    ))
-    print('    {:32}{}'.format(
-      make_dgpart(response.data_groups[3], response.data_group_selected),
-      make_dgpart(response.data_groups[8], response.data_group_selected),
-    ))
-    print('    {:32}{}'.format(
-      make_dgpart(response.data_groups[4], response.data_group_selected),
-      make_dgpart(response.data_groups[9], response.data_group_selected),
-    ))
+        def make_dgpart(response, idx):
+            data_group = response.data_groups[idx]
+            return '{}{:d}: {:8.03f}Ah, {:8.03f}Wh'.format(
+                '*' if data_group.group == response.data_group_selected else ' ',
+                data_group.group,
+                data_group.amp_hours,
+                data_group.watt_hours,
+            )
+        print('Data groups:')
+        print('    {:32}{}'.format(
+          make_dgpart(response, 0),
+          make_dgpart(response, 5),
+        ))
+        print('    {:32}{}'.format(
+          make_dgpart(response, 1),
+          make_dgpart(response, 6),
+        ))
+        print('    {:32}{}'.format(
+          make_dgpart(response, 2),
+          make_dgpart(response, 7),
+        ))
+        print('    {:32}{}'.format(
+          make_dgpart(response, 3),
+          make_dgpart(response, 8),
+        ))
+        print('    {:32}{}'.format(
+          make_dgpart(response, 4),
+          make_dgpart(response, 9),
+        ))
 
-    print('Temp: {:3d}C ({:3d}F)'.format(response.temp_c, response.temp_f))
-    print('Screen: {:d}/6, brightness: {:d}/5, timeout: {}'.format(
-        response.screen_selected,
-        response.screen_brightness,
-        '{:d} min'.format(response.screen_timeout) if response.screen_timeout else 'off',
-    ))
+        print('Temperature: {:3d}C ({:3d}F)'.format(response.temp_c, response.temp_f))
+        print('Screen: {:d}/6, brightness: {:d}/5, timeout: {}'.format(
+            response.screen_selected,
+            response.screen_brightness,
+            '{:d} min'.format(response.screen_timeout) if response.screen_timeout else 'off',
+        ))
+        if response.collection_time:
+            print('Collection time: {}'.format(response.collection_time))
+
+    def send_commands(self):
+        commands = b''
+        for arg, command_val in {
+            'next_screen': b'\xf1',
+            'rotate_screen': b'\xf2',
+            'next_data_group': b'\xf3',
+            'clear_data_group': b'\xf4',
+            'set_record_threshold': lambda x: bytes([0xb0 + int(x * 100)]),
+            'set_screen_brightness': lambda x: bytes([0xd0 + x]),
+            'set_screen_timeout': lambda x: bytes([0xe0 + x]),
+        }.items():
+            arg_val = getattr(self.args, arg)
+            if (arg_val is None) or (arg_val is False):
+                continue
+            print('{} {}'.format(arg, getattr(self.args, arg)))
+            if type(command_val) != bytes:
+                command_val = command_val(getattr(self.args, arg))
+            commands += command_val
+        if commands:
+            self.dev.send(commands)
+            return
+
+    def main(self):
+        self.args = parse_args()
+
+        if self.args.bluetooth_device:
+            self.dev = DeviceBluetooth(self.args.bluetooth_device)
+        else:
+            self.dev = DeviceSerial(self.args.serial_device)
+
+        if not self.args.json:
+            print('rdumtool {}'.format(__version__))
+            print('Copyright (C) 2019 Ryan Finnie')
+            print()
+        while True:
+            try:
+                self.dev.send(b'\xf0')
+                if self.args.json:
+                    self.print_json(Response(self.dev.recv(), collection_time=datetime.datetime.now()))
+                else:
+                    self.print_human(Response(self.dev.recv(), collection_time=datetime.datetime.now()))
+            except KeyboardInterrupt:
+                return
+            except:
+                traceback.print_exc()
+                if not self.args.watch:
+                    return 1
+            if self.args.watch:
+                if not self.args.json:
+                    print()
+                try:
+                    time.sleep(self.args.watch)
+                except KeyboardInterrupt:
+                    return
+            else:
+                break
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(RDUMTool().main())
