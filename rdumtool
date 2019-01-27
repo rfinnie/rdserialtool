@@ -298,7 +298,9 @@ class RDUMTool:
             commands += command_val
         if commands:
             self.dev.send(commands)
-            return
+            return True
+        else:
+            return False
 
     def main(self):
         self.args = parse_args()
@@ -307,6 +309,9 @@ class RDUMTool:
             self.dev = DeviceBluetooth(self.args.bluetooth_device)
         else:
             self.dev = DeviceSerial(self.args.serial_device)
+
+        if self.send_commands() is True:
+            return
 
         if not self.args.json:
             print('rdumtool {}'.format(__version__))
