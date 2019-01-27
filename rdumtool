@@ -260,13 +260,13 @@ class RDUMTool:
 
     def print_human(self, response):
         charging_map = {
-            response.CHARGING_UNKNOWN: 'unknown (normal)',
+            response.CHARGING_UNKNOWN: 'Unknown / Normal',
             response.CHARGING_QC2: 'Quick Charge 2.0',
             response.CHARGING_QC3: 'Quick Charge 3.0',
-            response.CHARGING_APP2_4A: 'APP 2.4A',
-            response.CHARGING_APP2_1A: 'APP 2.1A',
-            response.CHARGING_APP1_0A: 'APP 1.0A',
-            response.CHARGING_APP0_5A: 'APP 0.5A',
+            response.CHARGING_APP2_4A: 'Apple 2.4A',
+            response.CHARGING_APP2_1A: 'Apple 2.1A',
+            response.CHARGING_APP1_0A: 'Apple 1.0A',
+            response.CHARGING_APP0_5A: 'Apple 0.5A',
             response.CHARGING_DCP1_5A: 'DCP 1.5A',
             response.CHARGING_SAMSUNG: 'Samsung',
         }
@@ -274,12 +274,12 @@ class RDUMTool:
             response.volts,
             response.amps,
             response.watts,
-            response.resistance
+            response.resistance,
         ))
         print('Data: {:5.02f}V(+), {:5.02f}V(-), charging mode: {}'.format(
             response.data_line_positive_volts,
             response.data_line_negative_volts,
-            charging_map[response.charging_mode]
+            charging_map[response.charging_mode],
         ))
         print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:4d} sec at >= {:4.02f}A'.format(
             '(on)' if response.recording else '(off)',
