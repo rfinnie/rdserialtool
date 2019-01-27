@@ -281,7 +281,7 @@ class RDUMTool:
             response.data_line_negative_volts,
             charging_map[response.charging_mode],
         ))
-        print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:4d} sec at >= {:4.02f}A'.format(
+        print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:6d} sec at >= {:4.02f}A'.format(
             '(on)' if response.recording else '(off)',
             response.record_amphours,
             response.record_watthours,
