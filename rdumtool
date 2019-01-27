@@ -25,7 +25,6 @@ import os
 import json
 import time
 import datetime
-import traceback
 import logging
 
 __version__ = '1.0'
@@ -178,7 +177,7 @@ def parse_args(argv=None):
     parser.add_argument(
         '--version', '-V', action='version',
         version=__version__,
-        help='report the program version',
+        help='Report the program version',
     )
 
     parser.add_argument(
@@ -191,7 +190,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         '--device-type', '-t', choices=['UM24C', 'UM25C', 'UM34C'], default='UM24C',
-        help='Device type (UM24C/UM25C/UM34C)',
+        help='Device type',
     )
     device_group = parser.add_mutually_exclusive_group(required=False)
     device_group.add_argument(
@@ -224,7 +223,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         '--set-data-group', type=int, choices=range(10), default=None,
-        help='[UM25C, UM34C] Set the selected data group (0-9, inclusive)',
+        help='[UM25C, UM34C] Set the selected data group',
     )
     parser.add_argument(
         '--next-data-group', action='store_true',
@@ -236,15 +235,15 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         '--set-record-threshold', type=float, choices=[x / 100 for x in range(31)], default=None,
-        help='Set the recording threshold (0.00-0.30 amps, inclusive)',
+        help='Set the recording threshold',
     )
     parser.add_argument(
         '--set-screen-brightness', type=int, choices=range(6), default=None,
-        help='Set the screen brightness (0-5, inclusive)',
+        help='Set the screen brightness',
     )
     parser.add_argument(
         '--set-screen-timeout', type=int, choices=range(10), default=None,
-        help='Set the screen timeout (0-9 minutes, inclusive)',
+        help='Set the screen timeout',
     )
 
     args = parser.parse_args(args=argv[1:])
@@ -341,10 +340,11 @@ class RDUMTool:
             ('set_screen_brightness', lambda x: bytes([0xd0 + x]), ['UM24C', 'UM25C', 'UM34C']),
             ('set_screen_timeout', lambda x: bytes([0xe0 + x]), ['UM24C', 'UM25C', 'UM34C']),
         ]:
-            if self.args.device_type not in compat:
-                continue
             arg_val = getattr(self.args, arg)
             if (arg_val is None) or (arg_val is False):
+                continue
+            if self.args.device_type not in compat:
+                logging.warning('{} not supported on this device, ignoring'.format(arg))
                 continue
             if type(command_val) != bytes:
                 command_val = command_val(getattr(self.args, arg))
@@ -358,15 +358,17 @@ class RDUMTool:
         self.args = parse_args()
 
         # Logging setup
+        logging_format='%(message)s'
         if self.args.debug:
             logging_level = logging.DEBUG
+            logging_format='%(asctime)s %(levelname)s: %(message)s'
         elif self.args.quiet:
             logging_level = logging.ERROR
         else:
             logging_level = logging.INFO
         logging.basicConfig(
-            format='%(message)s',
-            level=logging_level
+            format=logging_format,
+            level=logging_level,
         )
 
         logging.info('rdumtool {}'.format(__version__))
@@ -413,7 +415,7 @@ class RDUMTool:
             except KeyboardInterrupt:
                 return
             except:
-                traceback.print_exc()
+                logging.exception('An exception has occurred')
                 if not self.args.watch:
                     return 1
             if self.args.watch:
