@@ -253,8 +253,10 @@ class Response:
     def load(self, data):
         if len(data) != 130:
             raise ValueError('Invalid data length', data)
-        if data[0:2] != b'\x09\x63' or data[128:130] != b'\xff\xf1':
-            raise ValueError('Invalid start/stop markers', data)
+        if data[0:2] != self._marker_map[self.device_type][0]:
+            raise ValueError('Invalid start marker', data)
+        if data[128:130] != self._marker_map[self.device_type][1]:
+            raise ValueError('Invalid stop marker', data)
         for name in self._std_defs:
             pos = self._std_defs[name][1]
             pos_len = self._std_defs[name][2]
