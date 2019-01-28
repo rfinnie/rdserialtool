@@ -220,10 +220,7 @@ class RDUMTool:
             # it'll eat commands.  Sleeping 0.5s between commands is safe.
             time.sleep(0.5)
 
-    def main(self):
-        self.args = parse_args()
-
-        # Logging setup
+    def setup_logging(self):
         logging_format = '%(message)s'
         if self.args.debug:
             logging_level = logging.DEBUG
@@ -237,10 +234,7 @@ class RDUMTool:
             level=logging_level,
         )
 
-        logging.info('rdumtool {}'.format(__version__))
-        logging.info('Copyright (C) 2019 Ryan Finnie')
-        logging.info('')
-
+    def setup_device(self):
         if (not self.args.bluetooth_device) and (not self.args.serial_device):
             logging.info('Searching for Bluetooth devices, please wait')
             self.dev = rdum.DeviceBluetooth()
@@ -261,8 +255,7 @@ class RDUMTool:
         logging.info('Connection established')
         logging.info('')
 
-        self.send_commands()
-
+    def loop(self):
         while True:
             try:
                 self.dev.send(b'\xf0')
@@ -279,21 +272,35 @@ class RDUMTool:
                         device_type=self.args.device_type,
                     ))
             except KeyboardInterrupt:
-                return
-            except:
-                logging.exception('An exception has occurred')
-                if self.args.watch is not None:
-                    return 1
+                raise
+            except Exception:
+                if self.args.watch is None:
+                    raise
+                else:
+                    logging.exception('An exception has occurred')
             if self.args.watch is not None:
                 if not self.args.json:
                     print()
-                try:
-                    if self.args.watch > 0:
-                        time.sleep(self.args.watch)
-                except KeyboardInterrupt:
-                    return
+                if self.args.watch > 0:
+                    time.sleep(self.args.watch)
             else:
-                break
+                return
+
+    def main(self):
+        self.args = parse_args()
+        self.setup_logging()
+
+        logging.info('rdumtool {}'.format(__version__))
+        logging.info('Copyright (C) 2019 Ryan Finnie')
+        logging.info('')
+
+        self.setup_device()
+        try:
+            self.send_commands()
+            self.loop()
+        except KeyboardInterrupt:
+            pass
+        self.dev.close()
 
 
 def main():

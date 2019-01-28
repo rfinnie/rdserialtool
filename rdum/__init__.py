@@ -34,6 +34,8 @@ CHARGING_SAMSUNG = 8
 
 
 class DeviceBluetooth:
+    dev = None
+
     def __init__(self, mac=None):
         import bluetooth
         self.bluetooth = bluetooth
@@ -45,8 +47,15 @@ class DeviceBluetooth:
         return self.bluetooth.discover_devices(duration=8, lookup_names=True, lookup_class=True)
 
     def connect(self, mac):
+        logging.debug('OPEN')
         self.dev = self.bluetooth.BluetoothSocket(self.bluetooth.RFCOMM)
         self.dev.connect((mac, 1))
+
+    def close(self):
+        if self.dev is None:
+            return
+        logging.debug('CLOSE')
+        self.dev.close()
 
     def send(self, data):
         logging.debug('SEND: {}'.format(repr(data)))
@@ -61,23 +70,39 @@ class DeviceBluetooth:
 
 
 class DeviceSerial:
-    def __init__(self, fn):
-        import serial
+    dev = None
 
-        self.dev = serial.Serial()
-        self.dev.port = fn
+    def __init__(self, device=None):
+        import serial
+        self.serial = serial
+
+        if device is not None:
+            self.connect(device)
+
+    def connect(self, device):
+        logging.debug('OPEN')
+        self.dev = self.serial.Serial()
+        self.dev.port = device
         self.dev.baudrate = 9600
         self.dev.parity = 'N'
         self.dev.writeTimeout = 0
         self.dev.open()
 
+    def close(self):
+        if self.dev is None:
+            return
+        logging.debug('CLOSE')
+        self.dev.close()
+
     def send(self, data):
+        logging.debug('SEND: {}'.format(repr(data)))
         self.dev.write(data)
 
     def recv(self):
         data = b''
         while(len(data) < 130):
             data += self.dev.read()
+        logging.debug('RECV: {}'.format(repr(data)))
         return data
 
 
