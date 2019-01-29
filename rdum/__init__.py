@@ -20,7 +20,7 @@ import struct
 import datetime
 import logging
 
-__version__ = '1.0'
+__version__ = '0.1'
 
 CHARGING_UNKNOWN = 0
 CHARGING_QC2 = 1
