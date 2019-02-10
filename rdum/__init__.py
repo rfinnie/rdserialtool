@@ -123,13 +123,6 @@ class DataGroup:
 
 
 class Response:
-    # TODO: Verify
-    _marker_map = {
-        'UM24C': (b'\x09\x63', b'\xff\xf1'),
-        'UM25C': (b'\x09\x63', b'\xff\xf1'),
-        'UM34C': (b'\x0d\x4c', b'\x80\x68'),
-    }
-
     def __repr__(self):
         return ('<Response: {} at {}, {:0.02f}V, {:0.03f}A>'.format(
             self.device_type,
@@ -146,6 +139,11 @@ class Response:
             self.device_multiplier = 1
 
         self._std_defs = {
+            'start': (
+                'Start bytes', 0, 2,
+                lambda x: x,
+                lambda x: int(x),
+            ),
             'volts': (
                 'Volts', 2, 2,
                 lambda x: x / (100 * self.device_multiplier),
@@ -236,6 +234,11 @@ class Response:
                 lambda x: x,
                 lambda x: int(x),
             ),
+            'end': (
+                'End bytes', 128, 2,
+                lambda x: x,
+                lambda x: int(x),
+            ),
         }
 
         if collection_time is None:
@@ -253,8 +256,6 @@ class Response:
 
     def dump(self):
         data = bytearray(130)
-        data[0:2] = self._marker_map[self.device_type][0]
-        data[128:130] = self._marker_map[self.device_type][1]
         for name in self._std_defs:
             pos = self._std_defs[name][1]
             pos_len = self._std_defs[name][2]
@@ -278,10 +279,7 @@ class Response:
     def load(self, data):
         if len(data) != 130:
             raise ValueError('Invalid data length', data)
-        if data[0:2] != self._marker_map[self.device_type][0]:
-            raise ValueError('Invalid start marker', data)
-        if data[128:130] != self._marker_map[self.device_type][1]:
-            raise ValueError('Invalid stop marker', data)
+        logging.debug('Start: 0x{:02x}{:02x}, end: 0x{:02x}{:02x}'.format(data[0], data[1], data[128], data[129]))
         for name in self._std_defs:
             pos = self._std_defs[name][1]
             pos_len = self._std_defs[name][2]
