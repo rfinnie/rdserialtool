@@ -17,9 +17,7 @@ interface.
 
 Compatibility
 
--   UM24C support is complete and tested.
--   UM25C and UM34C support should be complete, but has not been tested.
-    Hardware should arrive by March 2019.
+-   UM24C, UM25C and UM34C support is complete and tested.
 -   Tested under Python 3.6, but should work with 3.4 or later.
 -   Linux: Tested fine with both PyBluez (direct) and pyserial (e.g.
     /dev/rfcomm0 via rfcomm bind).
@@ -124,7 +122,7 @@ Thanks to the sigrok wiki for a reverse engineering of the UM24C's
 communication protocol, which was referenced to produce this tool.
 
 Thanks to RDTech for their power management devices. The author
-currently has a UM24C, and a DPS3003 DC-DC power supply, both of which
-are excellent quality and performance for their price. Even more thanks
-would be in order if they released proper protocol specifications and
-design schematics, hint hint.
+currently has a UM24C, a UM25C, a UM34C, and a DPS3003 DC-DC power
+supply, both of which are excellent quality and performance for their
+price. Even more thanks would be in order if they released proper
+protocol specifications and design schematics, hint hint.

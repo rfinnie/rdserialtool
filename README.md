@@ -6,8 +6,7 @@ The RDTech (RuiDeng) [UM24C](https://www.aliexpress.com/item/RD-UM24-UM24C-for-A
 
 ## Compatibility
 
- * UM24C support is complete and tested.
- * UM25C and UM34C support should be complete, but has not been tested.  Hardware should arrive by March 2019.
+ * UM24C, UM25C and UM34C support is complete and tested.
  * Tested under Python 3.6, but should work with 3.4 or later.
  * Linux: Tested fine with both PyBluez (direct) and pyserial (e.g. /dev/rfcomm0 via ```rfcomm bind```).
  * Windows: Tested fine with pyserial (e.g. COM4 as set up automatically by Windows).  Author could not get PyBluez compiled/installed.
@@ -104,4 +103,4 @@ Screen: 1/6, brightness: 5/5, timeout: 2 min
 
 Thanks to [the sigrok wiki](https://sigrok.org/wiki/RDTech_UM24C) for a reverse engineering of the UM24C's communication protocol, which was referenced to produce this tool.
 
-Thanks to RDTech for their power management devices.  The author currently has a UM24C, and a DPS3003 DC-DC power supply, both of which are excellent quality and performance for their price.  Even more thanks would be in order if they released proper protocol specifications and design schematics, hint hint.
+Thanks to RDTech for their power management devices.  The author currently has a UM24C, a UM25C, a UM34C, and a DPS3003 DC-DC power supply, both of which are excellent quality and performance for their price.  Even more thanks would be in order if they released proper protocol specifications and design schematics, hint hint.

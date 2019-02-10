@@ -194,7 +194,6 @@ class RDUMTool:
             print('Collection time: {}'.format(response.collection_time))
 
     def send_commands(self):
-        # TODO: Verify UM25C/UM34C
         for arg, command_val, compat in [
             ('next_screen', b'\xf1', ['UM24C', 'UM25C', 'UM34C']),
             ('rotate_screen', b'\xf2', ['UM24C', 'UM25C', 'UM34C']),
