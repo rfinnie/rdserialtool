@@ -135,7 +135,11 @@ class RDUMTool:
             rdum.CHARGING_DCP1_5A: 'DCP 1.5A',
             rdum.CHARGING_SAMSUNG: 'Samsung',
         }
-        print('USB: {:5.02f}V, {:6.03f}A, {:6.03f}W, {:6.01f}Ω'.format(
+        if self.args.device_type == 'UM25C':
+            usb_format = 'USB: {:5.03f}V, {:6.04f}A, {:6.03f}W, {:6.01f}Ω'
+        else:
+            usb_format = 'USB: {:5.02f}V, {:6.03f}A, {:6.03f}W, {:6.01f}Ω'
+        print(usb_format.format(
             response.volts,
             response.amps,
             response.watts,
