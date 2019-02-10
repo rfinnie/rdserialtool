@@ -36,20 +36,23 @@ CHARGING_SAMSUNG = 8
 class DeviceBluetooth:
     dev = None
 
-    def __init__(self, mac=None):
+    def __init__(self, address=None):
         import bluetooth
         self.bluetooth = bluetooth
 
-        if mac is not None:
-            self.connect(mac)
+        if address is not None:
+            self.connect(address)
 
     def scan(self):
         return self.bluetooth.discover_devices(duration=8, lookup_names=True, lookup_class=True)
 
-    def connect(self, mac):
+    def lookup_name(self, address):
+        return self.bluetooth.lookup_name(address)
+
+    def connect(self, address):
         logging.debug('OPEN')
         self.dev = self.bluetooth.BluetoothSocket(self.bluetooth.RFCOMM)
-        self.dev.connect((mac, 1))
+        self.dev.connect((address, 1))
 
     def close(self):
         if self.dev is None:

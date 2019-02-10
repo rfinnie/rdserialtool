@@ -54,13 +54,13 @@ def parse_args(argv=None):
         help='Print extra debugging information.',
     )
     parser.add_argument(
-        '--device-type', '-t', choices=['UM24C', 'UM25C', 'UM34C'], default='UM24C',
+        '--device-type', '-t', choices=['UM24C', 'UM25C', 'UM34C'], default=None,
         help='Device type',
     )
     device_group = parser.add_mutually_exclusive_group(required=False)
     device_group.add_argument(
-        '--bluetooth-device', '-d',
-        help='Bluetooth MAC address of the device',
+        '--bluetooth-address', '-d',
+        help='Bluetooth EUI-48 address of the device',
     )
     device_group.add_argument(
         '--serial-device', '-s',
@@ -238,23 +238,38 @@ class RDUMTool:
         )
 
     def setup_device(self):
-        if (not self.args.bluetooth_device) and (not self.args.serial_device):
-            logging.info('Searching for Bluetooth devices, please wait')
-            self.dev = rdum.DeviceBluetooth()
-            for mac, name, bt_class in self.dev.scan():
-                logging.info('    {} - {}'.format(mac, name))
-                if name in ('UM24C', 'UM25C', 'UM34C'):
-                    self.args.bluetooth_device = mac
-                    self.args.device_type = name
-            if not self.args.bluetooth_device:
-                logging.error('No suitable Bluetooth device found')
-                return
-        if self.args.bluetooth_device:
-            logging.info('Connecting to {} {}'.format(self.args.device_type, self.args.bluetooth_device))
-            self.dev = rdum.DeviceBluetooth(self.args.bluetooth_device)
-        elif self.args.serial_device:
+        if self.args.serial_device:
+            if self.args.device_type is None:
+                logging.error('Device type must be specified for this device')
+                return False
             logging.info('Connecting to {} {}'.format(self.args.device_type, self.args.serial_device))
             self.dev = rdum.DeviceSerial(self.args.serial_device)
+            logging.info('Connection established')
+            logging.info('')
+            return
+
+        self.dev = rdum.DeviceBluetooth()
+        if not self.args.bluetooth_address:
+            logging.info('Searching for Bluetooth devices, please wait')
+            for address, name, bt_class in self.dev.scan():
+                logging.info('    {} - {}'.format(address, name))
+                if name in ('UM24C', 'UM25C', 'UM34C'):
+                    self.args.bluetooth_address = address
+                    self.args.device_type = name
+            if not self.args.bluetooth_address:
+                logging.error('No suitable Bluetooth device found')
+                return False
+        if self.args.device_type is None:
+            logging.warn('Device type not specified, trying to figure out (not reliable; please specify)')
+            name = self.dev.lookup_name(self.args.bluetooth_address)
+            if name in ('UM24C', 'UM25C', 'UM34C'):
+                logging
+                self.args.device_type = name
+            else:
+                logging.error('Device type must be specified for this device')
+                return False
+        logging.info('Connecting to {} {}'.format(self.args.device_type, self.args.bluetooth_address))
+        self.dev.connect(self.args.bluetooth_address)
         logging.info('Connection established')
         logging.info('')
 
@@ -297,7 +312,8 @@ class RDUMTool:
         logging.info('Copyright (C) 2019 Ryan Finnie')
         logging.info('')
 
-        self.setup_device()
+        if self.setup_device() is False:
+            return 1
         try:
             self.send_commands()
             self.loop()

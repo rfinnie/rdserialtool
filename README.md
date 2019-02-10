@@ -66,7 +66,7 @@ $ sudo rfcomm bind 0 00:90:72:56:98:D7
 To get device information via PyBluez:
 
 ```
-$ rdumtool --device-type=UM24C --bluetooth-device=00:90:72:56:98:D7
+$ rdumtool --device-type=UM24C --bluetooth-address=00:90:72:56:98:D7
 ```
 
 Or via pyserial:
@@ -80,9 +80,9 @@ Without any additional arguments, rdumtool will display all information availabl
 ## Example
 
 ```
-$ rdumtool --device-type=UM24C --bluetooth-device=00:90:72:56:98:D7 --rotate-screen --set-record-threshold=0.20
+$ rdumtool --device-type=UM24C --bluetooth-address=00:90:72:56:98:D7 --rotate-screen --set-record-threshold=0.20
 
-$ rdumtool --device-type=UM24C --bluetooth-device=00:90:72:56:98:D7
+$ rdumtool --device-type=UM24C --bluetooth-address=00:90:72:56:98:D7
 rdumtool 1.0
 Copyright (C) 2019 Ryan Finnie
 
