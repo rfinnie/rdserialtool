@@ -23,6 +23,7 @@ import json
 import time
 import datetime
 import logging
+import statistics
 
 from . import __version__
 import rdum
@@ -75,6 +76,10 @@ def parse_args(argv=None):
         help='Repeat every WATCH seconds',
     )
     parser.add_argument(
+        '--trend-points', type=int, default=5,
+        help='Number of points to remember for determining a trend in watch mode',
+    )
+    parser.add_argument(
         '--next-screen', action='store_true',
         help='Go to the next screen on the display',
     )
@@ -116,6 +121,26 @@ def parse_args(argv=None):
 
 
 class RDUMTool:
+    def __init__(self):
+        self.trends = {}
+
+    def trend_s(self, name, value):
+        if not self.args.watch:
+            return ''
+
+        if name in self.trends:
+            trend = statistics.mean(self.trends[name])
+            self.trends[name] = self.trends[name][1:] + [value]
+            if value > trend:
+                return '↗'
+            elif value < trend:
+                return '↘'
+            else:
+                return ' '
+        else:
+            self.trends[name] = [value for x in range(self.args.trend_points)]
+            return ' '
+
     def print_json(self, response):
         out = {x: getattr(response, x) for x in response.labels}
         out['data_groups'] = [{'amp_hours': x.amp_hours, 'watt_hours': x.watt_hours} for x in out['data_groups']]
@@ -136,35 +161,46 @@ class RDUMTool:
             rdum.CHARGING_SAMSUNG: 'Samsung',
         }
         if self.args.device_type == 'UM25C':
-            usb_format = 'USB: {:5.03f}V, {:6.04f}A, {:6.03f}W, {:6.01f}Ω'
+            usb_format = 'USB: {:5.03f}V{}, {:6.04f}A{}, {:6.03f}W{}, {:6.01f}Ω{}'
         else:
-            usb_format = 'USB: {:5.02f}V, {:6.03f}A, {:6.03f}W, {:6.01f}Ω'
+            usb_format = 'USB: {:5.02f}V{}, {:6.03f}A{}, {:6.03f}W{}, {:6.01f}Ω{}'
         print(usb_format.format(
             response.volts,
+            self.trend_s('volts', response.volts),
             response.amps,
+            self.trend_s('amps', response.amps),
             response.watts,
+            self.trend_s('watts', response.watts),
             response.resistance,
+            self.trend_s('resistance', response.resistance),
         ))
-        print('Data: {:5.02f}V(+), {:5.02f}V(-), charging mode: {}'.format(
+        print('Data: {:5.02f}V(+){}, {:5.02f}V(-){}, charging mode: {}'.format(
             response.data_line_positive_volts,
+            self.trend_s('data_line_positive_volts', response.data_line_positive_volts),
             response.data_line_negative_volts,
+            self.trend_s('data_line_negative_volts', response.data_line_negative_volts),
             charging_map[response.charging_mode],
         ))
-        print('Recording {:5}: {:8.03f}Ah, {:8.03f}Wh, {:6d} sec at >= {:4.02f}A'.format(
+        print('Recording {:5}: {:8.03f}Ah{}, {:8.03f}Wh{}, {:6d}{} sec at >= {:4.02f}A'.format(
             '(on)' if response.recording else '(off)',
             response.record_amphours,
+            self.trend_s('record_amphours', response.record_amphours),
             response.record_watthours,
+            self.trend_s('record_watthours', response.record_watthours),
             response.record_seconds,
+            self.trend_s('record_seconds', response.record_seconds),
             response.record_threshold,
         ))
 
         def make_dgpart(response, idx):
             data_group = response.data_groups[idx]
-            return '{}{:d}: {:8.03f}Ah, {:8.03f}Wh'.format(
+            return '{}{:d}: {:8.03f}Ah{}, {:8.03f}Wh{}'.format(
                 '*' if data_group.group == response.data_group_selected else ' ',
                 data_group.group,
                 data_group.amp_hours,
+                self.trend_s('dg_{}_amp_hours'.format(data_group.group), data_group.amp_hours),
                 data_group.watt_hours,
+                self.trend_s('dg_{}_watt_hours'.format(data_group.group), data_group.watt_hours),
             )
         print('Data groups:')
         print('    {:32}{}'.format(
@@ -188,7 +224,13 @@ class RDUMTool:
           make_dgpart(response, 9),
         ))
 
-        print('{:>5s}, temperature: {:3d}C ({:3d}F)'.format(self.args.device_type, response.temp_c, response.temp_f))
+        print('{:>5s}, temperature: {:3d}C{} ({:3d}F{})'.format(
+            self.args.device_type,
+            response.temp_c,
+            self.trend_s('temp_c', response.temp_c),
+            response.temp_f,
+            self.trend_s('temp_f', response.temp_f),
+        ))
         print('Screen: {:d}/6, brightness: {:d}/5, timeout: {}'.format(
             response.screen_selected,
             response.screen_brightness,
