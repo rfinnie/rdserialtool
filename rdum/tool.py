@@ -34,6 +34,12 @@ def parse_args(argv=None):
     if argv is None:
         argv = sys.argv
 
+    def validate_set_record_threshold(string):
+        val = float(string)
+        if val not in [x / 100 for x in range(31)]:
+            raise argparse.ArgumentTypeError('Must be between 0.00 and 0.30, in 0.01 steps')
+        return val
+
     parser = argparse.ArgumentParser(
         description='rdumtool ({})'.format(__version__),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -48,7 +54,7 @@ def parse_args(argv=None):
 
     parser.add_argument(
         '--quiet', '-q', action='store_true',
-        help='Whether to display human-readable information to stderr',
+        help='Suppress human-readable stderr information',
     )
     parser.add_argument(
         '--debug', action='store_true',
@@ -73,7 +79,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         '--watch', type=float, const=2.0, nargs='?', default=None,
-        help='Repeat every WATCH seconds',
+        help='Repeat every WATCH seconds, default 2 if flag but no value',
     )
     parser.add_argument(
         '--trend-points', type=int, default=5,
@@ -104,8 +110,8 @@ def parse_args(argv=None):
         help='Clear the current data group',
     )
     parser.add_argument(
-        '--set-record-threshold', type=float, choices=[x / 100 for x in range(31)], default=None,
-        help='Set the recording threshold',
+        '--set-record-threshold', type=validate_set_record_threshold, default=None,
+        help='Set the recording threshold, 0.00-0.30 inclusive',
     )
     parser.add_argument(
         '--set-screen-brightness', type=int, choices=range(6), default=None,
@@ -117,6 +123,20 @@ def parse_args(argv=None):
     )
 
     args = parser.parse_args(args=argv[1:])
+
+    for arg, compat in [
+        ('next_data_group', ['UM24C']),
+        ('previous_screen', ['UM25C', 'UM34C']),
+        ('set_data_group', ['UM25C', 'UM34C']),
+    ]:
+        arg_val = getattr(args, arg)
+        if (arg_val is None) or (arg_val is False):
+            continue
+        if args.device_type not in compat:
+            parser.error('--{} not supported on device {}'.format(
+                arg.replace('_', '-'), args.device_type
+            ))
+
     return args
 
 
@@ -240,22 +260,19 @@ class RDUMTool:
             print('Collection time: {}'.format(response.collection_time))
 
     def send_commands(self):
-        for arg, command_val, compat in [
-            ('next_screen', b'\xf1', ['UM24C', 'UM25C', 'UM34C']),
-            ('rotate_screen', b'\xf2', ['UM24C', 'UM25C', 'UM34C']),
-            ('next_data_group', b'\xf3', ['UM24C']),
-            ('previous_screen', b'\xf3', ['UM25C', 'UM34C']),
-            ('clear_data_group', b'\xf4', ['UM24C', 'UM25C', 'UM34C']),
-            ('set_data_group', lambda x: bytes([0xa0 + x]), ['UM25C', 'UM34C']),
-            ('set_record_threshold', lambda x: bytes([0xb0 + int(x * 100)]), ['UM24C', 'UM25C', 'UM34C']),
-            ('set_screen_brightness', lambda x: bytes([0xd0 + x]), ['UM24C', 'UM25C', 'UM34C']),
-            ('set_screen_timeout', lambda x: bytes([0xe0 + x]), ['UM24C', 'UM25C', 'UM34C']),
+        for arg, command_val in [
+            ('next_screen', b'\xf1'),
+            ('rotate_screen', b'\xf2'),
+            ('next_data_group', b'\xf3'),
+            ('previous_screen', b'\xf3'),
+            ('clear_data_group', b'\xf4'),
+            ('set_data_group', lambda x: bytes([0xa0 + x])),
+            ('set_record_threshold', lambda x: bytes([0xb0 + int(x * 100)])),
+            ('set_screen_brightness', lambda x: bytes([0xd0 + x])),
+            ('set_screen_timeout', lambda x: bytes([0xe0 + x])),
         ]:
             arg_val = getattr(self.args, arg)
             if (arg_val is None) or (arg_val is False):
-                continue
-            if self.args.device_type not in compat:
-                logging.warning('{} not supported on this device, ignoring'.format(arg))
                 continue
             if type(command_val) != bytes:
                 command_val = command_val(getattr(self.args, arg))
