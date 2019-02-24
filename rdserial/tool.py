@@ -104,7 +104,7 @@ def parse_args(argv=None):
     return args
 
 
-class RDTechTool:
+class RDSerialTool:
     def setup_logging(self):
         logging_format = '%(message)s'
         if self.args.debug:
@@ -134,7 +134,7 @@ class RDTechTool:
 
 
 def main():
-    return RDTechTool().main()
+    return RDSerialTool().main()
 
 
 if __name__ == '__main__':
