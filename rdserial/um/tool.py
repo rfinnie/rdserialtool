@@ -93,9 +93,9 @@ class Tool:
             trend = statistics.mean(self.trends[name])
             self.trends[name] = self.trends[name][1:] + [value]
             if value > trend:
-                return '↗'
+                return '\u2197'
             elif value < trend:
-                return '↘'
+                return '\u2198'
             else:
                 return ' '
         else:
