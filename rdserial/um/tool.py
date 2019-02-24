@@ -24,6 +24,7 @@ import logging
 import statistics
 
 import rdserial.um
+import rdserial.um.device
 
 
 def add_subparsers(subparsers):
@@ -258,10 +259,10 @@ class Tool:
     def main(self):
         if self.args.serial_device:
             logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.serial_device))
-            self.dev = rdserial.um.DeviceSerial(self.args.serial_device, baudrate=self.args.baud)
+            self.dev = rdserial.um.device.Serial(self.args.serial_device, baudrate=self.args.baud)
         else:
             logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.bluetooth_address))
-            self.dev = rdserial.um.DeviceBluetooth(self.args.bluetooth_address, port=self.args.bluetooth_port)
+            self.dev = rdserial.um.device.Bluetooth(self.args.bluetooth_address, port=self.args.bluetooth_port)
         self.dev.connect()
         logging.info('Connection established')
         logging.info('')
