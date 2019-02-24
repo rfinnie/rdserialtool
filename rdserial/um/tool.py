@@ -244,15 +244,14 @@ class Tool:
             except KeyboardInterrupt:
                 raise
             except Exception:
-                if self.args.watch is None:
-                    raise
-                else:
+                if self.args.watch:
                     logging.exception('An exception has occurred')
-            if self.args.watch is not None:
+                else:
+                    raise
+            if self.args.watch:
                 if not self.args.json:
                     print()
-                if self.args.watch > 0:
-                    time.sleep(self.args.watch)
+                time.sleep(self.args.watch_seconds)
             else:
                 return
 

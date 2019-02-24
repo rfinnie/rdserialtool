@@ -83,8 +83,12 @@ def parse_args(argv=None):
         help='Output JSON data',
     )
     parser.add_argument(
-        '--watch', type=float, const=2.0, nargs='?', default=None,
-        help='Repeat every WATCH seconds, default 2 if flag but no value',
+        '--watch', action='store_true',
+        help='Repeat data collection until cancelled',
+    )
+    parser.add_argument(
+        '--watch-seconds', type=float, default=2.0,
+        help='Number of seconds between collections in watch mode',
     )
     parser.add_argument(
         '--trend-points', type=int, default=5,
