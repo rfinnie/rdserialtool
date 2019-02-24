@@ -1,4 +1,4 @@
-# rdumtool
+# rdserialtool
 # Copyright (C) 2019 Ryan Finnie
 #
 # This program is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@ import struct
 import datetime
 import logging
 
-__version__ = '0.1'
-
 CHARGING_UNKNOWN = 0
 CHARGING_QC2 = 1
 CHARGING_QC3 = 2
@@ -36,29 +34,23 @@ CHARGING_SAMSUNG = 8
 class DeviceBluetooth:
     dev = None
 
-    def __init__(self, address=None):
+    def __init__(self, address, port=1):
         import bluetooth
-        self.bluetooth = bluetooth
+        self._bluetooth = bluetooth
+        self.address = address
+        self.port = port
 
-        if address is not None:
-            self.connect(address)
-
-    def scan(self):
-        return self.bluetooth.discover_devices(duration=8, lookup_names=True, lookup_class=True)
-
-    def lookup_name(self, address):
-        return self.bluetooth.lookup_name(address)
-
-    def connect(self, address):
-        logging.debug('OPEN')
-        self.dev = self.bluetooth.BluetoothSocket(self.bluetooth.RFCOMM)
-        self.dev.connect((address, 1))
+    def connect(self):
+        logging.debug('CONNECT')
+        self.dev = self._bluetooth.BluetoothSocket(self._bluetooth.RFCOMM)
+        self.dev.connect((self.address, self.port))
 
     def close(self):
         if self.dev is None:
             return
         logging.debug('CLOSE')
         self.dev.close()
+        self.dev = None
 
     def send(self, data):
         logging.debug('SEND: {}'.format(repr(data)))
@@ -75,19 +67,17 @@ class DeviceBluetooth:
 class DeviceSerial:
     dev = None
 
-    def __init__(self, device=None):
+    def __init__(self, device, baudrate=9600):
         import serial
-        self.serial = serial
+        self._serial = serial
+        self.device = device
+        self.baudrate = baudrate
 
-        if device is not None:
-            self.connect(device)
-
-    def connect(self, device):
-        logging.debug('OPEN')
-        self.dev = self.serial.Serial()
-        self.dev.port = device
-        self.dev.baudrate = 9600
-        self.dev.parity = 'N'
+    def connect(self):
+        logging.debug('CONNECT')
+        self.dev = self._serial.Serial()
+        self.dev.port = self.device
+        self.dev.baudrate = self.baudrate
         self.dev.writeTimeout = 0
         self.dev.open()
 
@@ -96,6 +86,7 @@ class DeviceSerial:
             return
         logging.debug('CLOSE')
         self.dev.close()
+        self.dev = None
 
     def send(self, data):
         logging.debug('SEND: {}'.format(repr(data)))

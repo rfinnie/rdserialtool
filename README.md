@@ -1,28 +1,37 @@
-# rdumtool - RDTech UM24C/UM25C/UM34C Bluetooth interface tool
+# rdserialtool - RDTech UM/DPS series device interface tool
 
-*This script is currently in an early stage and could change significantly.*
+*This program is currently in an early stage and could change significantly.*
 
-The RDTech (RuiDeng) [UM24C](https://www.aliexpress.com/item/RD-UM24-UM24C-for-APP-USB-2-0-LCD-Display-Voltmeter-ammeter-battery-charge-voltage-current/32845522857.html), [UM25C](https://www.aliexpress.com/store/product/RD-UM25-UM25C-for-APP-USB-2-0-Type-C-LCD-Voltmeter-ammeter-voltage-current-meter/923042_32855845265.html) and [UM34C](https://www.aliexpress.com/store/product/RD-UM34-UM34C-for-APP-USB-3-0-Type-C-DC-Voltmeter-ammeter-voltage-current-meter/923042_32880908871.html) are low-cost USB pass-through power measurement devices, and support a decent number of collection features, as well as full control via Bluetooth.  (The non-C versions of these devices support the same features as the C versions, but without Bluetooth control.)  This program implements all exposed commands and data collection available by the device's Bluetooth interface.
+This program provides monitor, control and configuration access to [RDTech (RuiDeng)](https://rdtech.aliexpress.com/store/923042) UM and DPS series devices.
+
+The [UM24C](https://www.aliexpress.com/item/RD-UM24-UM24C-for-APP-USB-2-0-LCD-Display-Voltmeter-ammeter-battery-charge-voltage-current/32845522857.html), [UM25C](https://www.aliexpress.com/store/product/RD-UM25-UM25C-for-APP-USB-2-0-Type-C-LCD-Voltmeter-ammeter-voltage-current-meter/923042_32855845265.html) and [UM34C](https://www.aliexpress.com/store/product/RD-UM34-UM34C-for-APP-USB-3-0-Type-C-DC-Voltmeter-ammeter-voltage-current-meter/923042_32880908871.html) are low-cost USB pass-through power measurement devices, and support a decent number of collection features, as well as full control via Bluetooth.  (The non-C versions of these devices support the same features as the C versions, but without Bluetooth control.)
+
+The [DPS series](https://rdtech.aliexpress.com/store/923042) is a series of programmable DC-DC power supplies, and many devices in the series support external communication via the [Modbus](https://en.wikipedia.org/wiki/Modbus) RTU serial protocol over USB or Bluetooth.
 
 ## Compatibility
 
  * UM24C, UM25C and UM34C support is complete and tested.
+ * DPS5005 support is complete and tested.  Other devices in the DPS series (DPS3005, DPS5015, DPS5020, DPS8005, DPH5005) should perform identically.  (Status reports and bugs welcome.)
  * Tested under Python 3.6, but should work with 3.4 or later.
- * Linux: Tested fine with both PyBluez (direct) and pyserial (e.g. /dev/rfcomm0 via ```rfcomm bind```).
+ * Linux: Tested fine with both PyBluez (direct) and pyserial (e.g. /dev/rfcomm0 via ```rfcomm bind```), as well as direct USB serial (e.g. /dev/ttyUSB0) on DPS devices.
  * Windows: Tested fine with pyserial (e.g. COM4 as set up automatically by Windows).  Author could not get PyBluez compiled/installed.
  * MacOS: When using pyserial (e.g. /dev/cu.UM24C-Port as set up automatically by MacOS), writes to the device would succeed (e.g. 0xf2 to rotate the screen), but reads from the device never arrive.  Author could not get PyBluez compiled/installed.
 
 ## Setup
 
-rdumtool requires Python 3, and [PyBluez](https://pypi.org/project/PyBluez/) and/or [pyserial](https://pypi.org/project/pyserial/) modules.  Installation varies by operating system, but on Debian/Ubuntu, these are available via the python3-pybluez and python3-serial packages.
+rdserialtool requires Python 3.
 
-To install rdumtool:
+For UM series devices, [PyBluez](https://pypi.org/project/PyBluez/) and/or [pyserial](https://pypi.org/project/pyserial/) modules are required.  Installation varies by operating system, but on Debian/Ubuntu, these are available via the python3-pybluez and python3-serial packages, respectively.
+
+For DPS series devices, [pymodbus](https://pypi.org/project/pymodbus/) (python3-pymodbus on Debian/Ubuntu) is required.  For direct Bluetooth access, PyBluez is required.  For serial access (either via RFCOMM or direct USB), pyserial is required, but this is already a requirement of pymodbus.
+
+To install rdserialtool:
 
 ```
 $ sudo python3 setup.py install
 ```
 
-rdumtool may also be run directly from its source directory without installation.
+rdserialtool may also be run directly from its source directory without installation.
 
 ## Bluetooth setup
 
@@ -55,7 +64,7 @@ Agent unregistered
 
 Device MAC address will vary.  Again, the PIN for the device is "1234".
 
-If you then want to use rdumtool via pyserial, bind it via rfcomm:
+If you then want to use rdserialtool via direct serial, bind it via rfcomm:
 
 ```
 $ sudo rfcomm bind 0 00:90:72:56:98:D7
@@ -63,44 +72,78 @@ $ sudo rfcomm bind 0 00:90:72:56:98:D7
 
 ## Usage
 
-To get device information via PyBluez:
+A number of options common to device access are available to all commands; see:
 
 ```
-$ rdumtool --device-type=UM24C --bluetooth-address=00:90:72:56:98:D7
+$ rdserialtool --help
+```
+
+After the common options, a command is required (commands available are in ```--help``` above).  For example, to get device information from a UM24C via PyBluez:
+
+```
+$ rdserialtool --bluetooth-address=00:90:72:56:98:D7 um24c
 ```
 
 Or via pyserial:
 
 ```
-$ rdumtool --device-type=UM24C --serial-device=/dev/rfcomm0
+$ rdserialtool --serial-device=/dev/rfcomm0 um24c
 ```
 
-Without any additional arguments, rdumtool will display all information available from the device.  There are various additional flags to set parameters in the device such as threshold logging; see ```rdumtool --help``` for details.
+After the command, specific command-related options are available.  For example, to see options available for DPS devices:
+
+```
+$ rdserialtool dps --help
+```
+
+And to turn the output on for a DPS device:
+
+```
+$ rdserialtool --bluetooth-address=00:BA:68:00:47:3A dps --set-output-state=on
+```
 
 ## Example
 
 ```
-$ rdumtool --device-type=UM24C --bluetooth-address=00:90:72:56:98:D7 --rotate-screen --set-record-threshold=0.20
-
-$ rdumtool --device-type=UM24C --bluetooth-address=00:90:72:56:98:D7
-rdumtool 1.0
+$ rdserialtool --bluetooth-address=00:15:A6:00:36:2F um25c
+rdserialtool 0.1
 Copyright (C) 2019 Ryan Finnie
 
-USB:  5.08V,  0.166A,  0.843W,   30.6Ω
-Data:  2.99V(+),  0.00V(-), charging mode: unknown (normal)
-Recording (on) :    0.009Ah,    0.046Wh,  197 sec at >= 0.20A
+Connecting to UM25C 00:15:A6:00:36:2F
+Connection established
+
+USB: 5.062V, 0.1146A,  0.580W,   44.1Ω
+Data:  0.01V(+),  0.00V(-), charging mode: DCP 1.5A
+Recording (off):    0.000Ah,    0.000Wh,      0 sec at >= 0.13A
 Data groups:
-     0:    0.015Ah,    0.077Wh       5:    0.000Ah,    0.000Wh
+    *0:    0.001Ah,    0.009Wh       5:    0.000Ah,    0.000Wh
      1:    0.000Ah,    0.000Wh       6:    0.000Ah,    0.000Wh
-    *2:    0.040Ah,    0.204Wh       7:    0.000Ah,    0.000Wh
+     2:    0.000Ah,    0.000Wh       7:    0.000Ah,    0.000Wh
      3:    0.000Ah,    0.000Wh       8:    0.000Ah,    0.000Wh
      4:    0.000Ah,    0.000Wh       9:    0.000Ah,    0.000Wh
-Temp:  25C ( 77F)
-Screen: 1/6, brightness: 5/5, timeout: 2 min
+UM25C, temperature:  25C ( 78F)
+Screen: 1/6, brightness: 4/5, timeout: 2 min
+Collection time: 2019-02-23 22:53:08.468732
+```
+
+```
+$ rdserialtool --bluetooth-address=00:BA:68:00:47:3A dps
+rdserialtool 0.1
+Copyright (C) 2019 Ryan Finnie
+
+Connecting to DPS 00:BA:68:00:47:3A
+Connection established
+
+Setting:  5.00V,  5.100A (CV)
+Output (on) :  5.00V,  0.15A,   0.07W
+Input: 19.30V, protection: good
+Brightness: 4/5, key lock: off
+Model: 5005, firmware: 14
+Collection time: 2019-02-23 22:55:24.721946
 ```
 
 ## See also
 
-* [rddpstool](https://github.com/rfinnie/rddpstool), a similar tool for RDTech DPS series DC-DC power supplies.
 * [RDTech UM series](https://sigrok.org/wiki/RDTech_UM_series) on the sigrok wiki, which contains a lot of information and reverse engineering of the protocol used on these devices.
-
+* [DPS5005 communication protocol](https://www.mediafire.com/folder/3iogirsx1s0vp/DPS_communication_upper_computer#napmdzd4qt2dt) and Android/Windows software, from the manufacturer.
+* [opendps](https://github.com/kanflo/opendps), a replacement firmware package for the DPS5005.  (Incompatible with rdserialtool, as it uses its own communication interface.)

@@ -12,7 +12,7 @@ def read(filename):
 
 
 __version__ = None
-with open(os.path.join(os.path.dirname(__file__), 'rdum', '__init__.py')) as f:
+with open(os.path.join(os.path.dirname(__file__), 'rdserial', '__init__.py')) as f:
     for line in f:
         if not line.startswith('__version__ = '):
             continue
@@ -21,16 +21,16 @@ with open(os.path.join(os.path.dirname(__file__), 'rdum', '__init__.py')) as f:
 
 
 setup(
-    name='rdumtool',
-    description='RDTech UM24C/UM25C/UM34C Bluetooth interface tool',
+    name='rdserialtool',
+    description='RDTech UM/DPS series device interface tool',
     long_description=read('README'),
     version=__version__,
     license='GPLv2+',
     platforms=['Unix'],
     author='Ryan Finnie',
     author_email='ryan@finnie.org',
-    url='https://github.com/rfinnie/rdumtool',
-    download_url='https://github.com/rfinnie/rdumtool',
+    url='https://github.com/rfinnie/rdserialtool',
+    download_url='https://github.com/rfinnie/rdserialtool',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -43,7 +43,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'rdumtool = rdum.tool:main',
+            'rdserialtool = rdserial.tool:main',
         ],
     },
     test_suite='tests',

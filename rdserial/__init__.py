@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-
-# rdumtool
+# rdserialtool
 # Copyright (C) 2019 Ryan Finnie
 #
 # This program is free software; you can redistribute it and/or
@@ -18,7 +16,4 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-if __name__ == '__main__':
-    import sys
-    import rdum.tool
-    sys.exit(rdum.tool.main())
+__version__ = '0.1'

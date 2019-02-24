@@ -1,4 +1,4 @@
-# rdumtool
+# rdserialtool
 # Copyright (C) 2019 Ryan Finnie
 #
 # This program is free software; you can redistribute it and/or
@@ -17,130 +17,70 @@
 # 02110-1301, USA.
 
 import argparse
-import sys
-import os
 import json
 import time
 import datetime
 import logging
 import statistics
 
-from . import __version__
-import rdum
+import rdserial.um
 
 
-def parse_args(argv=None):
-    """Parse user arguments."""
-    if argv is None:
-        argv = sys.argv
-
+def add_subparsers(subparsers):
     def validate_set_record_threshold(string):
         val = float(string)
         if val not in [x / 100 for x in range(31)]:
             raise argparse.ArgumentTypeError('Must be between 0.00 and 0.30, in 0.01 steps')
         return val
 
-    parser = argparse.ArgumentParser(
-        description='rdumtool ({})'.format(__version__),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        prog=os.path.basename(argv[0]),
-    )
+    parser_um24c = subparsers.add_parser('um24c', help='RDTech UM24C')
+    parser_um25c = subparsers.add_parser('um25c', help='RDTech UM25C')
+    parser_um34c = subparsers.add_parser('um34c', help='RDTech UM34C')
 
-    parser.add_argument(
-        '--version', '-V', action='version',
-        version=__version__,
-        help='Report the program version',
-    )
+    for parser in (parser_um24c, parser_um25c, parser_um34c):
+        parser.add_argument(
+            '--next-screen', action='store_true',
+            help='Go to the next screen on the display',
+        )
+        parser.add_argument(
+            '--rotate-screen', action='store_true',
+            help='Rotate the screen 90 degrees clockwise',
+        )
+        parser.add_argument(
+            '--clear-data-group', action='store_true',
+            help='Clear the current data group',
+        )
+        parser.add_argument(
+            '--set-record-threshold', type=validate_set_record_threshold, default=None,
+            help='Set the recording threshold, 0.00-0.30 inclusive',
+        )
+        parser.add_argument(
+            '--set-screen-brightness', type=int, choices=range(6), default=None,
+            help='Set the screen brightness',
+        )
+        parser.add_argument(
+            '--set-screen-timeout', type=int, choices=range(10), default=None,
+            help='Set the screen timeout',
+        )
 
-    parser.add_argument(
-        '--quiet', '-q', action='store_true',
-        help='Suppress human-readable stderr information',
-    )
-    parser.add_argument(
-        '--debug', action='store_true',
-        help='Print extra debugging information.',
-    )
-    parser.add_argument(
-        '--device-type', '-t', choices=['UM24C', 'UM25C', 'UM34C'], default=None,
-        help='Device type',
-    )
-    device_group = parser.add_mutually_exclusive_group(required=False)
-    device_group.add_argument(
-        '--bluetooth-address', '-d',
-        help='Bluetooth EUI-48 address of the device',
-    )
-    device_group.add_argument(
-        '--serial-device', '-s',
-        help='Serial filename (e.g. /dev/rfcomm0) of the device',
-    )
-    parser.add_argument(
-        '--json', action='store_true',
-        help='Output JSON data',
-    )
-    parser.add_argument(
-        '--watch', type=float, const=2.0, nargs='?', default=None,
-        help='Repeat every WATCH seconds, default 2 if flag but no value',
-    )
-    parser.add_argument(
-        '--trend-points', type=int, default=5,
-        help='Number of points to remember for determining a trend in watch mode',
-    )
-    parser.add_argument(
-        '--next-screen', action='store_true',
-        help='Go to the next screen on the display',
-    )
-    parser.add_argument(
-        '--previous-screen', action='store_true',
-        help='[UM25C, UM34C] Go to the previous screen on the display',
-    )
-    parser.add_argument(
-        '--rotate-screen', action='store_true',
-        help='Rotate the screen 90 degrees clockwise',
-    )
-    parser.add_argument(
-        '--set-data-group', type=int, choices=range(10), default=None,
-        help='[UM25C, UM34C] Set the selected data group',
-    )
-    parser.add_argument(
-        '--next-data-group', action='store_true',
-        help='[UM24C] Change to the next data group',
-    )
-    parser.add_argument(
-        '--clear-data-group', action='store_true',
-        help='Clear the current data group',
-    )
-    parser.add_argument(
-        '--set-record-threshold', type=validate_set_record_threshold, default=None,
-        help='Set the recording threshold, 0.00-0.30 inclusive',
-    )
-    parser.add_argument(
-        '--set-screen-brightness', type=int, choices=range(6), default=None,
-        help='Set the screen brightness',
-    )
-    parser.add_argument(
-        '--set-screen-timeout', type=int, choices=range(10), default=None,
-        help='Set the screen timeout',
-    )
+    for parser in (parser_um25c, parser_um34c):
+        parser.add_argument(
+            '--previous-screen', action='store_true',
+            help='Go to the previous screen on the display',
+        )
+        parser.add_argument(
+            '--set-data-group', type=int, choices=range(10), default=None,
+            help='Set the selected data group',
+        )
 
-    args = parser.parse_args(args=argv[1:])
-
-    for arg, compat in [
-        ('next_data_group', ['UM24C']),
-        ('previous_screen', ['UM25C', 'UM34C']),
-        ('set_data_group', ['UM25C', 'UM34C']),
-    ]:
-        arg_val = getattr(args, arg)
-        if (arg_val is None) or (arg_val is False):
-            continue
-        if args.device_type not in compat:
-            parser.error('--{} not supported on device {}'.format(
-                arg.replace('_', '-'), args.device_type
-            ))
-
-    return args
+    for parser in (parser_um24c,):
+        parser.add_argument(
+            '--next-data-group', action='store_true',
+            help='Change to the next data group',
+        )
 
 
-class RDUMTool:
+class Tool:
     def __init__(self):
         self.trends = {}
 
@@ -170,17 +110,17 @@ class RDUMTool:
     def print_human(self, response):
         logging.debug('DUMP: {}'.format(repr(response.dump())))
         charging_map = {
-            rdum.CHARGING_UNKNOWN: 'Unknown / Normal',
-            rdum.CHARGING_QC2: 'Quick Charge 2.0',
-            rdum.CHARGING_QC3: 'Quick Charge 3.0',
-            rdum.CHARGING_APP2_4A: 'Apple 2.4A',
-            rdum.CHARGING_APP2_1A: 'Apple 2.1A',
-            rdum.CHARGING_APP1_0A: 'Apple 1.0A',
-            rdum.CHARGING_APP0_5A: 'Apple 0.5A',
-            rdum.CHARGING_DCP1_5A: 'DCP 1.5A',
-            rdum.CHARGING_SAMSUNG: 'Samsung',
+            rdserial.um.CHARGING_UNKNOWN: 'Unknown / Normal',
+            rdserial.um.CHARGING_QC2: 'Quick Charge 2.0',
+            rdserial.um.CHARGING_QC3: 'Quick Charge 3.0',
+            rdserial.um.CHARGING_APP2_4A: 'Apple 2.4A',
+            rdserial.um.CHARGING_APP2_1A: 'Apple 2.1A',
+            rdserial.um.CHARGING_APP1_0A: 'Apple 1.0A',
+            rdserial.um.CHARGING_APP0_5A: 'Apple 0.5A',
+            rdserial.um.CHARGING_DCP1_5A: 'DCP 1.5A',
+            rdserial.um.CHARGING_SAMSUNG: 'Samsung',
         }
-        if self.args.device_type == 'UM25C':
+        if self.args.command == 'um25c':
             usb_format = 'USB: {:5.03f}V{}, {:6.04f}A{}, {:6.03f}W{}, {:6.01f}Ω{}'
         else:
             usb_format = 'USB: {:5.02f}V{}, {:6.03f}A{}, {:6.03f}W{}, {:6.01f}Ω{}'
@@ -245,7 +185,7 @@ class RDUMTool:
         ))
 
         print('{:>5s}, temperature: {:3d}C{} ({:3d}F{})'.format(
-            self.args.device_type,
+            self.args.command.upper(),
             response.temp_c,
             self.trend_s('temp_c', response.temp_c),
             response.temp_f,
@@ -271,6 +211,8 @@ class RDUMTool:
             ('set_screen_brightness', lambda x: bytes([0xd0 + x])),
             ('set_screen_timeout', lambda x: bytes([0xe0 + x])),
         ]:
+            if not hasattr(self.args, arg):
+                continue
             arg_val = getattr(self.args, arg)
             if (arg_val is None) or (arg_val is False):
                 continue
@@ -282,71 +224,21 @@ class RDUMTool:
             # it'll eat commands.  Sleeping 0.5s between commands is safe.
             time.sleep(0.5)
 
-    def setup_logging(self):
-        logging_format = '%(message)s'
-        if self.args.debug:
-            logging_level = logging.DEBUG
-            logging_format = '%(asctime)s %(levelname)s: %(message)s'
-        elif self.args.quiet:
-            logging_level = logging.ERROR
-        else:
-            logging_level = logging.INFO
-        logging.basicConfig(
-            format=logging_format,
-            level=logging_level,
-        )
-
-    def setup_device(self):
-        if self.args.serial_device:
-            if self.args.device_type is None:
-                logging.error('Device type must be specified for this device')
-                return False
-            logging.info('Connecting to {} {}'.format(self.args.device_type, self.args.serial_device))
-            self.dev = rdum.DeviceSerial(self.args.serial_device)
-            logging.info('Connection established')
-            logging.info('')
-            return
-
-        self.dev = rdum.DeviceBluetooth()
-        if not self.args.bluetooth_address:
-            logging.info('Searching for Bluetooth devices, please wait')
-            for address, name, bt_class in self.dev.scan():
-                logging.info('    {} - {}'.format(address, name))
-                if name in ('UM24C', 'UM25C', 'UM34C'):
-                    self.args.bluetooth_address = address
-                    self.args.device_type = name
-            if not self.args.bluetooth_address:
-                logging.error('No suitable Bluetooth device found')
-                return False
-        if self.args.device_type is None:
-            logging.warn('Device type not specified, trying to figure out (not reliable; please specify)')
-            name = self.dev.lookup_name(self.args.bluetooth_address)
-            if name in ('UM24C', 'UM25C', 'UM34C'):
-                logging
-                self.args.device_type = name
-            else:
-                logging.error('Device type must be specified for this device')
-                return False
-        logging.info('Connecting to {} {}'.format(self.args.device_type, self.args.bluetooth_address))
-        self.dev.connect(self.args.bluetooth_address)
-        logging.info('Connection established')
-        logging.info('')
-
     def loop(self):
         while True:
             try:
                 self.dev.send(b'\xf0')
                 if self.args.json:
-                    self.print_json(rdum.Response(
+                    self.print_json(rdserial.um.Response(
                         self.dev.recv(),
                         collection_time=datetime.datetime.now(),
-                        device_type=self.args.device_type,
+                        device_type=self.args.command.upper(),
                     ))
                 else:
-                    self.print_human(rdum.Response(
+                    self.print_human(rdserial.um.Response(
                         self.dev.recv(),
                         collection_time=datetime.datetime.now(),
-                        device_type=self.args.device_type,
+                        device_type=self.args.command.upper(),
                     ))
             except KeyboardInterrupt:
                 raise
@@ -364,15 +256,16 @@ class RDUMTool:
                 return
 
     def main(self):
-        self.args = parse_args()
-        self.setup_logging()
-
-        logging.info('rdumtool {}'.format(__version__))
-        logging.info('Copyright (C) 2019 Ryan Finnie')
+        if self.args.serial_device:
+            logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.serial_device))
+            self.dev = rdserial.um.DeviceSerial(self.args.serial_device, baudrate=self.args.baud)
+        else:
+            logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.bluetooth_address))
+            self.dev = rdserial.um.DeviceBluetooth(self.args.bluetooth_address, port=self.args.bluetooth_port)
+        self.dev.connect()
+        logging.info('Connection established')
         logging.info('')
-
-        if self.setup_device() is False:
-            return 1
+        time.sleep(self.args.connect_delay)
         try:
             self.send_commands()
             self.loop()
@@ -381,9 +274,7 @@ class RDUMTool:
         self.dev.close()
 
 
-def main():
-    return(RDUMTool().main())
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+def main(parent):
+    r = Tool()
+    r.args = parent.args
+    return r.main()
