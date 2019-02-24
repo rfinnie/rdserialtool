@@ -102,7 +102,7 @@ class Tool:
             return ' '
 
     def print_json(self, response):
-        out = {x: getattr(response, x) for x in response.labels}
+        out = {x: getattr(response, x) for x in response.field_properties}
         out['data_groups'] = [{'amp_hours': x.amp_hours, 'watt_hours': x.watt_hours} for x in out['data_groups']]
         out['collection_time'] = (out['collection_time'] - datetime.datetime.fromtimestamp(0)).total_seconds()
         print(json.dumps(out))

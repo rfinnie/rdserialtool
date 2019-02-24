@@ -132,134 +132,171 @@ class Response:
         else:
             self.device_multiplier = 1
 
-        self._std_defs = {
-            'start': (
-                'Start bytes', 0, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'volts': (
-                'Volts', 2, 2,
-                lambda x: x / (100 * self.device_multiplier),
-                lambda x: int(x * (100 * self.device_multiplier)),
-            ),
-            'amps': (
-                'Amps', 4, 2,
-                lambda x: x / (1000 * self.device_multiplier),
-                lambda x: int(x * (1000 * self.device_multiplier)),
-            ),
-            'watts': (
-                'Watts', 6, 4,
-                lambda x: x / 1000,
-                lambda x: int(x * 1000),
-            ),
-            'temp_c': (
-                'Temperature (Celsius)', 10, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'temp_f': (
-                'Temperature (Fahrenheit)', 12, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'data_group_selected': (
-                'Currently selected data group', 14, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'data_line_positive_volts': (
-                'Positive data line volts', 96, 2,
-                lambda x: x / 100,
-                lambda x: int(x * 100),
-            ),
-            'data_line_negative_volts': (
-                'Negative data line volts', 98, 2,
-                lambda x: x / 100,
-                lambda x: int(x * 100),
-            ),
-            'charging_mode': (
-                'Charging mode', 100, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'record_amphours': (
-                'Recorded amp-hours', 102, 4,
-                lambda x: x / 1000,
-                lambda x: int(x * 1000),
-            ),
-            'record_watthours': (
-                'Recorded watt-hours', 106, 4,
-                lambda x: x / 1000,
-                lambda x: int(x * 1000),
-            ),
-            'record_threshold': (
-                'Recording threshold (Amps)', 110, 2,
-                lambda x: x / 100,
-                lambda x: int(x * 100),
-            ),
-            'record_seconds': (
-                'Recorded time (Seconds)', 112, 4,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'recording': (
-                'Recording', 116, 2,
-                lambda x: bool(x),
-                lambda x: int(x),
-            ),
-            'screen_timeout': (
-                'Screen timeout (Minutes)', 118, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'screen_brightness': (
-                'Screen brightness', 120, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'resistance': (
-                'Resistance (Ohms)', 122, 4,
-                lambda x: x / 10,
-                lambda x: int(x * 10),
-            ),
-            'screen_selected': (
-                'Currently selected screen', 126, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
-            'end': (
-                'End bytes', 128, 2,
-                lambda x: x,
-                lambda x: int(x),
-            ),
+        self.field_properties = {
+            'start': {
+                'description': 'Start bytes',
+                'position': 0,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'volts': {
+                'description': 'Volts',
+                'position': 2,
+                'length': 2,
+                'from_int': lambda x: x / (100 * self.device_multiplier),
+                'to_int': lambda x: int(x * (100 * self.device_multiplier)),
+            },
+            'amps': {
+                'description': 'Amps',
+                'position': 4,
+                'length': 2,
+                'from_int': lambda x: x / (1000 * self.device_multiplier),
+                'to_int': lambda x: int(x * (1000 * self.device_multiplier)),
+            },
+            'watts': {
+                'description': 'Watts',
+                'position': 6,
+                'length': 4,
+                'from_int': lambda x: x / 1000,
+                'to_int': lambda x: int(x * 1000),
+            },
+            'temp_c': {
+                'description': 'Temperature (Celsius)',
+                'position': 10,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'temp_f': {
+                'description': 'Temperature (Fahrenheit)',
+                'position': 12,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'data_group_selected': {
+                'description': 'Currently selected data group',
+                'position': 14,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'data_line_positive_volts': {
+                'description': 'Positive data line volts',
+                'position': 96,
+                'length': 2,
+                'from_int': lambda x: x / 100,
+                'to_int': lambda x: int(x * 100),
+            },
+            'data_line_negative_volts': {
+                'description': 'Negative data line volts',
+                'position': 98,
+                'length': 2,
+                'from_int': lambda x: x / 100,
+                'to_int': lambda x: int(x * 100),
+            },
+            'charging_mode': {
+                'description': 'Charging mode',
+                'position': 100,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'record_amphours': {
+                'description': 'Recorded amp-hours',
+                'position': 102,
+                'length': 4,
+                'from_int': lambda x: x / 1000,
+                'to_int': lambda x: int(x * 1000),
+            },
+            'record_watthours': {
+                'description': 'Recorded watt-hours',
+                'position': 106,
+                'length': 4,
+                'from_int': lambda x: x / 1000,
+                'to_int': lambda x: int(x * 1000),
+            },
+            'record_threshold': {
+                'description': 'Recording threshold (Amps)',
+                'position': 110,
+                'length': 2,
+                'from_int': lambda x: x / 100,
+                'to_int': lambda x: int(x * 100),
+            },
+            'record_seconds': {
+                'description': 'Recorded time (Seconds)',
+                'position': 112,
+                'length': 4,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'recording': {
+                'description': 'Recording',
+                'position': 116,
+                'length': 2,
+                'from_int': lambda x: bool(x),
+                'to_int': lambda x: int(x),
+            },
+            'screen_timeout': {
+                'description': 'Screen timeout (Minutes)',
+                'position': 118,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'screen_brightness': {
+                'description': 'Screen brightness',
+                'position': 120,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'resistance': {
+                'description': 'Resistance (Ohms)',
+                'position': 122,
+                'length': 4,
+                'from_int': lambda x: x / 10,
+                'to_int': lambda x: int(x * 10),
+            },
+            'screen_selected': {
+                'description': 'Currently selected screen',
+                'position': 126,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
+            'end': {
+                'description': 'End bytes',
+                'position': 128,
+                'length': 2,
+                'from_int': lambda x: x,
+                'to_int': lambda x: int(x),
+            },
         }
 
         if collection_time is None:
             collection_time = datetime.datetime.now()
         self.collection_time = collection_time
-        for name in self._std_defs:
+        for name in self.field_properties:
             setattr(self, name, 0)
         self.data_groups = [DataGroup(x) for x in range(10)]
-        self.labels = {x: self._std_defs[x][0] for x in self._std_defs}
-        self.labels['data_groups'] = 'Data groups'
-        self.labels['collection_time'] = 'Collection time'
 
         if data:
             self.load(data)
 
     def dump(self):
         data = bytearray(130)
-        for name in self._std_defs:
-            pos = self._std_defs[name][1]
-            pos_len = self._std_defs[name][2]
+        for name in self.field_properties:
+            pos = self.field_properties[name]['position']
+            pos_len = self.field_properties[name]['length']
             if pos_len == 2:
                 pack_format = '>H'
             elif pos_len == 4:
                 pack_format = '>L'
             else:
                 pack_format = 'B'
-            conversion_dump = self._std_defs[name][4]
+            conversion_dump = self.field_properties[name]['to_int']
             data[pos:pos+pos_len] = struct.pack(pack_format, conversion_dump(getattr(self, name)))
 
         for data_group in self.data_groups:
@@ -274,16 +311,16 @@ class Response:
         if len(data) != 130:
             raise ValueError('Invalid data length', data)
         logging.debug('Start: 0x{:02x}{:02x}, end: 0x{:02x}{:02x}'.format(data[0], data[1], data[128], data[129]))
-        for name in self._std_defs:
-            pos = self._std_defs[name][1]
-            pos_len = self._std_defs[name][2]
+        for name in self.field_properties:
+            pos = self.field_properties[name]['position']
+            pos_len = self.field_properties[name]['length']
             if pos_len == 2:
                 pack_format = '>H'
             elif pos_len == 4:
                 pack_format = '>L'
             else:
                 pack_format = 'B'
-            conversion_load = self._std_defs[name][3]
+            conversion_load = self.field_properties[name]['from_int']
             val = conversion_load(struct.unpack(pack_format, data[pos:pos+pos_len])[0])
             setattr(self, name, val)
 
