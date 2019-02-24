@@ -99,8 +99,8 @@ Temp:  25C ( 77F)
 Screen: 1/6, brightness: 5/5, timeout: 2 min
 ```
 
-## Miscellaneous
+## See also
 
-Thanks to [the sigrok wiki](https://sigrok.org/wiki/RDTech_UM24C) for a reverse engineering of the UM24C's communication protocol, which was referenced to produce this tool.
+* [rddpstool](https://github.com/rfinnie/rddpstool), a similar tool for RDTech DPS series DC-DC power supplies.
+* [RDTech UM series](https://sigrok.org/wiki/RDTech_UM_series) on the sigrok wiki, which contains a lot of information and reverse engineering of the protocol used on these devices.
 
-Thanks to RDTech for their power management devices.  The author currently has a UM24C, a UM25C, a UM34C, and a DPS3003 DC-DC power supply, both of which are excellent quality and performance for their price.  Even more thanks would be in order if they released proper protocol specifications and design schematics, hint hint.
