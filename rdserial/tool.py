@@ -97,6 +97,10 @@ def parse_args(argv=None):
         rdserial.dps.tool.add_subparsers(subparsers)
 
     args = parser.parse_args(args=argv[1:])
+
+    if args.command is None:
+        parser.error('Command required')
+
     return args
 
 
