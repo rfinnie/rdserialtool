@@ -270,7 +270,7 @@ class Tool:
         out['groups'] = {}
         for group, device_group_state in device_state.groups.items():
             out['groups'][group] = {x: getattr(device_group_state, x) for x in device_group_state.register_properties}
-        print(json.dumps(out))
+        print(json.dumps(out, sort_keys=True))
 
     def assemble_device_state(self):
         device_state = rdserial.dps.DeviceState()
