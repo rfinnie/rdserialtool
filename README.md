@@ -19,11 +19,7 @@ The [DPS series](https://rdtech.aliexpress.com/store/923042) is a series of prog
 
 ## Setup
 
-rdserialtool requires Python 3.
-
-For UM series devices, [PyBluez](https://pypi.org/project/PyBluez/) and/or [pyserial](https://pypi.org/project/pyserial/) modules are required.  Installation varies by operating system, but on Debian/Ubuntu, these are available via the python3-pybluez and python3-serial packages, respectively.
-
-For DPS series devices, [pymodbus](https://pypi.org/project/pymodbus/) (python3-pymodbus on Debian/Ubuntu) is required.  For direct Bluetooth access, PyBluez is required.  For serial access (either via RFCOMM or direct USB), pyserial is required, but this is already a requirement of pymodbus.
+rdserialtool requires Python 3, and [PyBluez](https://pypi.org/project/PyBluez/) and/or [pyserial](https://pypi.org/project/pyserial/) modules, depending on which method you use to connect.  Installation varies by operating system, but on Debian/Ubuntu, these are available via the python3-pybluez and python3-serial packages, respectively.
 
 To install rdserialtool:
 

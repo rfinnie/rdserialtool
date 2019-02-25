@@ -23,7 +23,8 @@ import time
 import statistics
 
 import rdserial.dps
-import rdserial.dps.modbus
+import rdserial.modbus
+import rdserial.device
 
 
 def add_subparsers(subparsers):
@@ -187,31 +188,24 @@ class Tool:
                 register_commands[register_num] = register_val
 
         # Optimize into a set of minimal register writes
-        # register_commands_opt = {}
-        # for register in sorted(register_commands.keys()):
-        #     found_opt = False
-        #     for g in register_commands_opt:
-        #         if register == g + len(register_commands_opt[g]):
-        #             register_commands_opt[g].append(register_commands[register])
-        #             found_opt = True
-        #             break
-        #     if not found_opt:
-        #         register_commands_opt[register] = [register_commands[register]]
-        # logging.debug(register_commands_opt)
-        # for register_base in register_commands_opt:
-        #     self.modbus_client.write_registers(
-        #         register_base, register_commands_opt[register_base], unit=self.args.modbus_unit,
-        #     )
-
-        # The above would be more efficient, but my DPS5005 seems to not
-        # respond when using write_registers(), despite 0x10 being documented
-        # in the DPS's communication protocol.  Hmm.  So instead, go through
-        # one by one and use write_register().
-        # For further analysis, sample hang:
-        #   0x1 0x10 0x0 0x9 0x0 0x2 0x4 0x0 0x0 0x0 0x1 0xf2 0x5
-        for register in register_commands:
-            self.modbus_client.write_register(
-                register, register_commands[register], unit=self.args.modbus_unit,
+        register_commands_opt = {}
+        for register in sorted(register_commands.keys()):
+            found_opt = False
+            for g in register_commands_opt:
+                if (register == g + len(register_commands_opt[g])) and (len(register_commands_opt[g]) < 32):
+                    register_commands_opt[g].append(register_commands[register])
+                    found_opt = True
+                    break
+            if not found_opt:
+                register_commands_opt[register] = [register_commands[register]]
+        for register_base in register_commands_opt:
+            logging.debug('Writing {} register(s) ({}) at base {}'.format(
+                len(register_commands_opt[register_base]),
+                register_commands_opt[register_base],
+                register_base,
+            ))
+            self.modbus_client.write_registers(
+                register_base, register_commands_opt[register_base], unit=self.args.modbus_unit,
             )
 
     def print_human(self, device_state):
@@ -270,10 +264,10 @@ class Tool:
 
     def assemble_device_state(self):
         device_state = rdserial.dps.DeviceState()
-        rr = self.modbus_client.read_holding_registers(
+        registers = self.modbus_client.read_registers(
             0x00, 13, unit=self.args.modbus_unit,
         )
-        device_state.load(rr.registers)
+        device_state.load(registers)
 
         if self.args.all_groups:
             groups = range(10)
@@ -283,10 +277,10 @@ class Tool:
             groups = []
         for group in groups:
             device_group_state = rdserial.dps.GroupState(group)
-            rr = self.modbus_client.read_holding_registers(
+            registers = self.modbus_client.read_registers(
                 0x50 + (0x10 * group), 8, unit=self.args.modbus_unit
             )
-            device_group_state.load(rr.registers, offset=(0x50 + (0x10 * group)))
+            device_group_state.load(registers, offset=(0x50 + (0x10 * group)))
             device_state.groups[group] = device_group_state
 
         return device_state
@@ -316,20 +310,20 @@ class Tool:
     def main(self):
         if self.args.bluetooth_address:
             logging.info('Connecting to DPS {}'.format(self.args.bluetooth_address))
-            self.modbus_client = rdserial.dps.modbus.ModbusBluetoothClient(
+            self.socket = rdserial.device.Bluetooth(
                 self.args.bluetooth_address,
                 port=self.args.bluetooth_port,
-                method='rtu',
-                baudrate=self.args.baud,
             )
         else:
             logging.info('Connecting to DPS {}'.format(self.args.serial_device))
-            self.modbus_client = rdserial.dps.modbus.ModbusSerialClient(
-                method='rtu',
-                port=self.args.serial_device,
-                baudrate=self.args.baud,
+            self.socket = rdserial.device.Serial(
+                self.args.serial_device,
             )
-        self.modbus_client.connect()
+        self.socket.connect()
+        self.modbus_client = rdserial.modbus.RTUClient(
+            self.socket,
+            baudrate=self.args.baud,
+        )
         logging.info('Connection established')
         logging.info('')
         time.sleep(self.args.connect_delay)
@@ -339,7 +333,7 @@ class Tool:
             self.loop()
         except KeyboardInterrupt:
             pass
-        self.modbus_client.close()
+        self.socket.close()
 
 
 def main(parent):

@@ -24,7 +24,7 @@ import logging
 import statistics
 
 import rdserial.um
-import rdserial.um.device
+import rdserial.device
 
 
 def add_subparsers(subparsers):
@@ -220,7 +220,7 @@ class Tool:
             if type(command_val) != bytes:
                 command_val = command_val(getattr(self.args, arg))
             logging.info('Setting {} to {}'.format(arg, getattr(self.args, arg)))
-            self.dev.send(command_val)
+            self.socket.send(command_val)
             # Sometimes you can send multiple commands quickly, but sometimes
             # it'll eat commands.  Sleeping 0.5s between commands is safe.
             time.sleep(0.5)
@@ -228,16 +228,16 @@ class Tool:
     def loop(self):
         while True:
             try:
-                self.dev.send(b'\xf0')
+                self.socket.send(b'\xf0')
                 if self.args.json:
                     self.print_json(rdserial.um.Response(
-                        self.dev.recv(),
+                        self.socket.recv(130),
                         collection_time=datetime.datetime.now(),
                         device_type=self.args.command.upper(),
                     ))
                 else:
                     self.print_human(rdserial.um.Response(
-                        self.dev.recv(),
+                        self.socket.recv(130),
                         collection_time=datetime.datetime.now(),
                         device_type=self.args.command.upper(),
                     ))
@@ -258,11 +258,17 @@ class Tool:
     def main(self):
         if self.args.serial_device:
             logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.serial_device))
-            self.dev = rdserial.um.device.Serial(self.args.serial_device, baudrate=self.args.baud)
+            self.socket = rdserial.device.Serial(
+                self.args.serial_device,
+                baudrate=self.args.baud,
+            )
         else:
             logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.bluetooth_address))
-            self.dev = rdserial.um.device.Bluetooth(self.args.bluetooth_address, port=self.args.bluetooth_port)
-        self.dev.connect()
+            self.socket = rdserial.device.Bluetooth(
+                self.args.bluetooth_address,
+                port=self.args.bluetooth_port,
+            )
+        self.socket.connect()
         logging.info('Connection established')
         logging.info('')
         time.sleep(self.args.connect_delay)
@@ -271,7 +277,7 @@ class Tool:
             self.loop()
         except KeyboardInterrupt:
             pass
-        self.dev.close()
+        self.socket.close()
 
 
 def main(parent):
