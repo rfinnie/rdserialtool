@@ -55,12 +55,23 @@ def add_subparsers(subparsers):
         '--set-amps', type=float, default=None,
         help='Set current setting',
     )
-    parser.add_argument(
-        '--set-output-state', type=(lambda x: x in ('on', 'true')), default=None,
+
+    onoff_group = parser.add_mutually_exclusive_group(required=False)
+    onoff_group.add_argument(
+        '--set-output-state', type=(lambda x: x.lower() in ('on', 'true')), dest='set_output_state', default=None,
         help='Set output on/off',
     )
+    onoff_group.add_argument(
+        '--on', action='store_true', dest='set_output_state',
+        help='Set output on',
+    )
+    onoff_group.add_argument(
+        '--off', action='store_false', dest='set_output_state',
+        help='Set output off',
+    )
+
     parser.add_argument(
-        '--set-key-lock', type=(lambda x: x in ('on', 'true')), default=None,
+        '--set-key-lock', type=(lambda x: x.lower() in ('on', 'true')), default=None,
         help='Set key lock on/off',
     )
     parser.add_argument(
