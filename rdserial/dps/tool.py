@@ -187,6 +187,9 @@ class Tool:
                 ))
                 register_commands[register_num] = register_val
 
+        if len(register_commands) > 0:
+            logging.info('')
+
         # Optimize into a set of minimal register writes
         register_commands_opt = {}
         for register in sorted(register_commands.keys()):
