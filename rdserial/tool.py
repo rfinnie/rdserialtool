@@ -23,11 +23,7 @@ import logging
 
 from rdserial import __version__
 import rdserial.um.tool
-try:
-    import rdserial.dps.tool
-    HAS_DPS = True
-except ImportError:
-    HAS_DPS = False
+import rdserial.dps.tool
 
 
 def parse_args(argv=None):
@@ -97,8 +93,7 @@ def parse_args(argv=None):
 
     subparsers = parser.add_subparsers(dest='command', help='Commands')
     rdserial.um.tool.add_subparsers(subparsers)
-    if HAS_DPS:
-        rdserial.dps.tool.add_subparsers(subparsers)
+    rdserial.dps.tool.add_subparsers(subparsers)
 
     args = parser.parse_args(args=argv[1:])
 
