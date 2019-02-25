@@ -24,7 +24,6 @@ import logging
 import statistics
 
 import rdserial.um
-import rdserial.device
 
 
 def add_subparsers(subparsers):
@@ -82,8 +81,11 @@ def add_subparsers(subparsers):
 
 
 class Tool:
-    def __init__(self):
+    def __init__(self, parent=None):
         self.trends = {}
+        if parent is not None:
+            self.args = parent.args
+            self.socket = parent.socket
 
     def trend_s(self, name, value):
         if not self.args.watch:
@@ -256,31 +258,8 @@ class Tool:
                 return
 
     def main(self):
-        if self.args.serial_device:
-            logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.serial_device))
-            self.socket = rdserial.device.Serial(
-                self.args.serial_device,
-                baudrate=self.args.baud,
-            )
-        else:
-            logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.bluetooth_address))
-            self.socket = rdserial.device.Bluetooth(
-                self.args.bluetooth_address,
-                port=self.args.bluetooth_port,
-            )
-        self.socket.connect()
-        logging.info('Connection established')
-        logging.info('')
-        time.sleep(self.args.connect_delay)
         try:
             self.send_commands()
             self.loop()
         except KeyboardInterrupt:
             pass
-        self.socket.close()
-
-
-def main(parent):
-    r = Tool()
-    r.args = parent.args
-    return r.main()

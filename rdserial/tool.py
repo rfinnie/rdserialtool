@@ -20,8 +20,10 @@ import argparse
 import sys
 import os
 import logging
+import time
 
 from rdserial import __version__
+import rdserial.device
 import rdserial.um.tool
 import rdserial.dps.tool
 
@@ -126,10 +128,31 @@ class RDSerialTool:
         logging.info('Copyright (C) 2019 Ryan Finnie')
         logging.info('')
 
+        if self.args.serial_device:
+            logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.serial_device))
+            self.socket = rdserial.device.Serial(
+                self.args.serial_device,
+                baudrate=self.args.baud,
+            )
+        else:
+            logging.info('Connecting to {} {}'.format(self.args.command.upper(), self.args.bluetooth_address))
+            self.socket = rdserial.device.Bluetooth(
+                self.args.bluetooth_address,
+                port=self.args.bluetooth_port,
+            )
+        self.socket.connect()
+        logging.info('Connection established')
+        logging.info('')
+        time.sleep(self.args.connect_delay)
+
         if self.args.command in ('um24c', 'um25c', 'um34c'):
-            return rdserial.um.tool.main(self)
+            tool = rdserial.um.tool.Tool(self)
         elif self.args.command == 'dps':
-            return rdserial.dps.tool.main(self)
+            tool = rdserial.dps.tool.Tool(self)
+        ret = tool.main()
+
+        self.socket.close()
+        return ret
 
 
 def main():
