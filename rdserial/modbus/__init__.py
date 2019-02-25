@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-# Note that is a massively simplified Modbus RTU client,
+# Note that this is a massively simplified Modbus RTU client,
 # and is not suitable for general Modbus use.
 
 import time
