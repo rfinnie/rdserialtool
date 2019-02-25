@@ -28,6 +28,9 @@ import rdserial.modbus
 
 
 def add_subparsers(subparsers):
+    def loose_bool(val):
+        return val.lower() in ('on', 'true', 'yes')
+
     parser = subparsers.add_parser(
         'dps',
         help='RDTech DPS series',
@@ -58,7 +61,7 @@ def add_subparsers(subparsers):
 
     onoff_group = parser.add_mutually_exclusive_group(required=False)
     onoff_group.add_argument(
-        '--set-output-state', type=(lambda x: x.lower() in ('on', 'true')), dest='set_output_state', default=None,
+        '--set-output-state', type=loose_bool, dest='set_output_state', default=None,
         help='Set output on/off',
     )
     onoff_group.add_argument(
@@ -71,7 +74,7 @@ def add_subparsers(subparsers):
     )
 
     parser.add_argument(
-        '--set-key-lock', type=(lambda x: x.lower() in ('on', 'true')), default=None,
+        '--set-key-lock', type=loose_bool, default=None,
         help='Set key lock on/off',
     )
     parser.add_argument(
@@ -108,11 +111,11 @@ def add_subparsers(subparsers):
         help='Set group screen brightness',
     )
     parser.add_argument(
-        '--set-group-maintain-output', type=(lambda x: x in ('on', 'true')), default=None,
+        '--set-group-maintain-output', type=loose_bool, default=None,
         help='Set group maintain output state during group change',
     )
     parser.add_argument(
-        '--set-group-poweron-output', type=(lambda x: x in ('on', 'true')), default=None,
+        '--set-group-poweron-output', type=loose_bool, default=None,
         help='Set group enable output on power-on',
     )
 
