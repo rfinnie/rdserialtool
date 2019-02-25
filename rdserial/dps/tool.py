@@ -21,13 +21,18 @@ import json
 import datetime
 import time
 import statistics
+import argparse
 
 import rdserial.dps
 import rdserial.modbus
 
 
 def add_subparsers(subparsers):
-    parser = subparsers.add_parser('dps', help='RDTech DPS series')
+    parser = subparsers.add_parser(
+        'dps',
+        help='RDTech DPS series',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     parser.add_argument(
         '--modbus-unit', type=int, default=1,

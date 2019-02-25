@@ -37,6 +37,10 @@ def parse_args(argv=None):
         description='rdserialtool ({})'.format(__version__),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         prog=os.path.basename(argv[0]),
+        epilog=((
+            'Additional options are available for each command; see `{} {{command}} --help`' +
+            'for more details.'
+        ).format(os.path.basename(argv[0]))),
     )
 
     parser.add_argument(
@@ -56,7 +60,7 @@ def parse_args(argv=None):
 
     device_group = parser.add_mutually_exclusive_group(required=True)
     device_group.add_argument(
-        '--bluetooth-address', '-d',
+        '--bluetooth-address', '-b',
         help='Bluetooth EUI-48 address of the device',
     )
     device_group.add_argument(

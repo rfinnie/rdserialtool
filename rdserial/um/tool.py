@@ -33,9 +33,21 @@ def add_subparsers(subparsers):
             raise argparse.ArgumentTypeError('Must be between 0.00 and 0.30, in 0.01 steps')
         return val
 
-    parser_um24c = subparsers.add_parser('um24c', help='RDTech UM24C')
-    parser_um25c = subparsers.add_parser('um25c', help='RDTech UM25C')
-    parser_um34c = subparsers.add_parser('um34c', help='RDTech UM34C')
+    parser_um24c = subparsers.add_parser(
+        'um24c',
+        help='RDTech UM24C',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser_um25c = subparsers.add_parser(
+        'um25c',
+        help='RDTech UM25C',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser_um34c = subparsers.add_parser(
+        'um34c',
+        help='RDTech UM34C',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     for parser in (parser_um24c, parser_um25c, parser_um34c):
         parser.add_argument(
