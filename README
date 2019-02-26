@@ -120,7 +120,7 @@ And to turn the output on for a DPS device:
 Example
 
     $ rdserialtool --bluetooth-address=00:15:A6:00:36:2F um25c
-    rdserialtool 0.1
+    rdserialtool
     Copyright (C) 2019 Ryan Finnie
 
     Connecting to UM25C 00:15:A6:00:36:2F
@@ -140,7 +140,7 @@ Example
     Collection time: 2019-02-23 22:53:08.468732
 
     $ rdserialtool --bluetooth-address=00:BA:68:00:47:3A dps
-    rdserialtool 0.1
+    rdserialtool
     Copyright (C) 2019 Ryan Finnie
 
     Connecting to DPS 00:BA:68:00:47:3A

@@ -20,4 +20,4 @@ import sys
 
 assert(sys.version_info > (3, 4))
 
-__version__ = '0.1'
+__version__ = '0.2'
