@@ -15,9 +15,9 @@ as well as full control via Bluetooth. (The non-C versions of these
 devices support the same features as the C versions, but without
 Bluetooth control.)
 
-The DPS series is a series of programmable DC-DC power supplies, and
-many devices in the series support external communication via the Modbus
-RTU serial protocol over USB or Bluetooth.
+The DPS series are programmable DC-DC power supplies, and many devices
+in the series support external communication via the Modbus RTU serial
+protocol over USB or Bluetooth.
 
 
 Compatibility
@@ -35,8 +35,8 @@ Compatibility
     compiled/installed.
 -   MacOS: When using pyserial (e.g. /dev/cu.UM24C-Port as set up
     automatically by MacOS), writes to the device would succeed (e.g.
-    0xf2 to rotate the screen), but reads from the device never arrive.
-    Author could not get PyBluez compiled/installed.
+    0xf2 to rotate the screen on UM series), but reads from the device
+    never arrive. Author could not get PyBluez compiled/installed.
 
 
 Setup
@@ -57,7 +57,7 @@ installation.
 Bluetooth setup
 
 Varies by operating system. If the pairing procedure asks for a PIN,
-enter "1234" verbatim.
+enter 1234.
 
 For command-line installation on Linux:
 
@@ -82,7 +82,7 @@ For command-line installation on Linux:
     [bluetooth]# exit
     Agent unregistered
 
-Device MAC address will vary. Again, the PIN for the device is "1234".
+Device MAC address will vary. Again, the PIN for the device is 1234.
 
 If you then want to use rdserialtool via direct serial, bind it via
 rfcomm:
@@ -179,5 +179,5 @@ See also
 -   DPS5005 communication protocol and Android/Windows software, from
     the manufacturer.
 -   opendps, a replacement firmware package for the DPS5005.
-    (Incompatible with rdserialtool, as it uses its own communication
-    interface.)
+    (Incompatible with rdserialtool, as opendps uses its own
+    communication interface.)

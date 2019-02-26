@@ -6,7 +6,7 @@ This program provides monitor, control and configuration access to [RDTech (RuiD
 
 The [UM24C](https://www.aliexpress.com/item/RD-UM24-UM24C-for-APP-USB-2-0-LCD-Display-Voltmeter-ammeter-battery-charge-voltage-current/32845522857.html), [UM25C](https://www.aliexpress.com/store/product/RD-UM25-UM25C-for-APP-USB-2-0-Type-C-LCD-Voltmeter-ammeter-voltage-current-meter/923042_32855845265.html) and [UM34C](https://www.aliexpress.com/store/product/RD-UM34-UM34C-for-APP-USB-3-0-Type-C-DC-Voltmeter-ammeter-voltage-current-meter/923042_32880908871.html) are low-cost USB pass-through power measurement devices, and support a decent number of collection features, as well as full control via Bluetooth.  (The non-C versions of these devices support the same features as the C versions, but without Bluetooth control.)
 
-The [DPS series](https://rdtech.aliexpress.com/store/923042) is a series of programmable DC-DC power supplies, and many devices in the series support external communication via the [Modbus](https://en.wikipedia.org/wiki/Modbus) RTU serial protocol over USB or Bluetooth.
+The [DPS series](https://rdtech.aliexpress.com/store/923042) are programmable DC-DC power supplies, and many devices in the series support external communication via the [Modbus](https://en.wikipedia.org/wiki/Modbus) RTU serial protocol over USB or Bluetooth.
 
 ## Compatibility
 
@@ -15,7 +15,7 @@ The [DPS series](https://rdtech.aliexpress.com/store/923042) is a series of prog
  * Tested under Python 3.6, but should work with 3.4 or later.
  * Linux: Tested fine with both PyBluez (direct) and pyserial (e.g. /dev/rfcomm0 via ```rfcomm bind```), as well as direct USB serial (e.g. /dev/ttyUSB0) on DPS devices.
  * Windows: Tested fine with pyserial (e.g. COM4 as set up automatically by Windows).  Author could not get PyBluez compiled/installed.
- * MacOS: When using pyserial (e.g. /dev/cu.UM24C-Port as set up automatically by MacOS), writes to the device would succeed (e.g. 0xf2 to rotate the screen), but reads from the device never arrive.  Author could not get PyBluez compiled/installed.
+ * MacOS: When using pyserial (e.g. /dev/cu.UM24C-Port as set up automatically by MacOS), writes to the device would succeed (e.g. 0xf2 to rotate the screen on UM series), but reads from the device never arrive.  Author could not get PyBluez compiled/installed.
 
 ## Setup
 
@@ -31,7 +31,7 @@ rdserialtool may also be run directly from its source directory without installa
 
 ## Bluetooth setup
 
-Varies by operating system.  If the pairing procedure asks for a PIN, enter "1234" verbatim.
+Varies by operating system.  If the pairing procedure asks for a PIN, enter 1234.
 
 For command-line installation on Linux:
 
@@ -58,7 +58,7 @@ Changing 00:90:72:56:98:D7 trust succeeded
 Agent unregistered
 ```
 
-Device MAC address will vary.  Again, the PIN for the device is "1234".
+Device MAC address will vary.  Again, the PIN for the device is 1234.
 
 If you then want to use rdserialtool via direct serial, bind it via rfcomm:
 
@@ -152,4 +152,4 @@ This tool is not affiliated with or endorsed by RDTech.
 
 * [RDTech UM series](https://sigrok.org/wiki/RDTech_UM_series) on the sigrok wiki, which contains a lot of information and reverse engineering of the protocol used on these devices.
 * [DPS5005 communication protocol](https://www.mediafire.com/folder/3iogirsx1s0vp/DPS_communication_upper_computer#napmdzd4qt2dt) and Android/Windows software, from the manufacturer.
-* [opendps](https://github.com/kanflo/opendps), a replacement firmware package for the DPS5005.  (Incompatible with rdserialtool, as it uses its own communication interface.)
+* [opendps](https://github.com/kanflo/opendps), a replacement firmware package for the DPS5005.  (Incompatible with rdserialtool, as opendps uses its own communication interface.)
