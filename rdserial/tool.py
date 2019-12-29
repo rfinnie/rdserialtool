@@ -26,6 +26,7 @@ from rdserial import __version__
 import rdserial.device
 import rdserial.um.tool
 import rdserial.dps.tool
+import rdserial.rd.tool
 
 
 def parse_args(argv=None):
@@ -100,6 +101,7 @@ def parse_args(argv=None):
     subparsers = parser.add_subparsers(dest='command', help='Commands')
     rdserial.um.tool.add_subparsers(subparsers)
     rdserial.dps.tool.add_subparsers(subparsers)
+    rdserial.rd.tool.add_subparsers(subparsers)
 
     args = parser.parse_args(args=argv[1:])
 
@@ -153,6 +155,8 @@ class RDSerialTool:
             tool = rdserial.um.tool.Tool(self)
         elif self.args.command == 'dps':
             tool = rdserial.dps.tool.Tool(self)
+        elif self.args.command == 'rd':
+            tool = rdserial.rd.tool.Tool(self)
         ret = tool.main()
 
         self.socket.close()

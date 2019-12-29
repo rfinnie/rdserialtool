@@ -1,17 +1,20 @@
-# rdserialtool - RDTech UM/DPS series device interface tool
+# rdserialtool - RDTech UM/DPS/RD series device interface tool
 
 *This program is currently in an early stage and could change significantly.*
 
-This program provides monitor, control and configuration access to [RDTech (RuiDeng)](https://rdtech.aliexpress.com/store/923042) UM and DPS series devices.
+This program provides monitor, control and configuration access to [RDTech (RuiDeng, Riden)](https://rdtech.aliexpress.com/store/923042) UM, DPS and RD series devices.
 
 The [UM24C](https://www.aliexpress.com/item/RD-UM24-UM24C-for-APP-USB-2-0-LCD-Display-Voltmeter-ammeter-battery-charge-voltage-current/32845522857.html), [UM25C](https://www.aliexpress.com/store/product/RD-UM25-UM25C-for-APP-USB-2-0-Type-C-LCD-Voltmeter-ammeter-voltage-current-meter/923042_32855845265.html) and [UM34C](https://www.aliexpress.com/store/product/RD-UM34-UM34C-for-APP-USB-3-0-Type-C-DC-Voltmeter-ammeter-voltage-current-meter/923042_32880908871.html) are low-cost USB pass-through power measurement devices, and support a decent number of collection features, as well as full control via Bluetooth.  (The non-C versions of these devices support the same features as the C versions, but without Bluetooth control.)
 
 The [DPS series](https://rdtech.aliexpress.com/store/923042) are programmable DC-DC power supplies, and many devices in the series support external communication via the [Modbus](https://en.wikipedia.org/wiki/Modbus) RTU serial protocol over USB or Bluetooth.
 
+The RD6006 is a logical continuation of the DPS series and also uses Modbus communication, but the registers are incompatible with previous DPS series, so "RD" is treated as a separate series.
+
 ## Compatibility
 
  * UM24C, UM25C and UM34C support is complete and tested.
  * DPS5005 support is complete and tested.  Other devices in the DPS series (DPS3005, DPS5015, DPS5020, DPS8005, DPH5005) should perform identically.  (Status reports and bugs welcome.)
+ * RD6006 is has basic support and testing.  Reading and writing most states work.  Group values can be read and written to, but it is not yet possible to load a group as active.
  * Tested under Python 3.6, but should work with 3.4 or later.
  * Linux: Tested fine with both PyBluez (direct) and pyserial (e.g. /dev/rfcomm0 via ```rfcomm bind```), as well as direct USB serial (e.g. /dev/ttyUSB0) on DPS devices.
  * Windows: Tested fine with pyserial (e.g. COM4 as set up automatically by Windows).  Author could not get PyBluez compiled/installed.
@@ -136,6 +139,22 @@ Input: 19.30V, protection: good
 Brightness: 4/5, key lock: off
 Model: 5005, firmware: 14
 Collection time: 2019-02-23 22:55:24.721946
+```
+
+```
+$ rdserialtool --serial-device=/dev/ttyUSB0 --baud=115200 rd
+rdserialtool
+Copyright (C) 2019 Ryan Finnie
+
+Connecting to RD /dev/ttyUSB0
+Connection established
+
+Setting: 15.00V,  0.998A (CV)
+Output (on) : 14.99V,  0.14A,   0.20W
+Input: 50.15V, protection: good
+Brightness: 4/5, key lock: off
+Model: 60062, firmware: 125, serial: 5403
+Collection time: 2019-12-28 21:16:07.114146
 ```
 
 ## About

@@ -1,13 +1,13 @@
 
 
-RDSERIALTOOL - RDTECH UM/DPS SERIES DEVICE INTERFACE TOOL
+RDSERIALTOOL - RDTECH UM/DPS/RD SERIES DEVICE INTERFACE TOOL
 
 
 _This program is currently in an early stage and could change
 significantly._
 
 This program provides monitor, control and configuration access to
-RDTech (RuiDeng) UM and DPS series devices.
+RDTech (RuiDeng, Riden) UM, DPS and RD series devices.
 
 The UM24C, UM25C and UM34C are low-cost USB pass-through power
 measurement devices, and support a decent number of collection features,
@@ -19,6 +19,10 @@ The DPS series are programmable DC-DC power supplies, and many devices
 in the series support external communication via the Modbus RTU serial
 protocol over USB or Bluetooth.
 
+The RD6006 is a logical continuation of the DPS series and also uses
+Modbus communication, but the registers are incompatible with previous
+DPS series, so “RD” is treated as a separate series.
+
 
 Compatibility
 
@@ -26,17 +30,21 @@ Compatibility
 -   DPS5005 support is complete and tested. Other devices in the DPS
     series (DPS3005, DPS5015, DPS5020, DPS8005, DPH5005) should perform
     identically. (Status reports and bugs welcome.)
+-   RD6006 is has basic support and testing. Reading and writing most
+    states work. Group values can be read and written to, but it is not
+    yet possible to load a group as active.
 -   Tested under Python 3.6, but should work with 3.4 or later.
--   Linux: Tested fine with both PyBluez (direct) and pyserial (e.g.
-    /dev/rfcomm0 via rfcomm bind), as well as direct USB serial (e.g.
-    /dev/ttyUSB0) on DPS devices.
--   Windows: Tested fine with pyserial (e.g. COM4 as set up
+-   Linux: Tested fine with both PyBluez (direct) and pyserial
+    (e.g. /dev/rfcomm0 via rfcomm bind), as well as direct USB serial
+    (e.g. /dev/ttyUSB0) on DPS devices.
+-   Windows: Tested fine with pyserial (e.g. COM4 as set up
     automatically by Windows). Author could not get PyBluez
     compiled/installed.
--   MacOS: When using pyserial (e.g. /dev/cu.UM24C-Port as set up
-    automatically by MacOS), writes to the device would succeed (e.g.
-    0xf2 to rotate the screen on UM series), but reads from the device
-    never arrive. Author could not get PyBluez compiled/installed.
+-   MacOS: When using pyserial (e.g. /dev/cu.UM24C-Port as set up
+    automatically by MacOS), writes to the device would succeed
+    (e.g. 0xf2 to rotate the screen on UM series), but reads from the
+    device never arrive. Author could not get PyBluez
+    compiled/installed.
 
 
 Setup
@@ -152,6 +160,20 @@ Example
     Brightness: 4/5, key lock: off
     Model: 5005, firmware: 14
     Collection time: 2019-02-23 22:55:24.721946
+
+    $ rdserialtool --serial-device=/dev/ttyUSB0 --baud=115200 rd
+    rdserialtool
+    Copyright (C) 2019 Ryan Finnie
+
+    Connecting to RD /dev/ttyUSB0
+    Connection established
+
+    Setting: 15.00V,  0.998A (CV)
+    Output (on) : 14.99V,  0.14A,   0.20W
+    Input: 50.15V, protection: good
+    Brightness: 4/5, key lock: off
+    Model: 60062, firmware: 125, serial: 5403
+    Collection time: 2019-12-28 21:16:07.114146
 
 
 About
