@@ -16,7 +16,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-import argparse
 import json
 import time
 import datetime
@@ -26,70 +25,7 @@ import statistics
 import rdserial.um
 
 
-def add_subparsers(subparsers):
-    def validate_set_record_threshold(string):
-        val = float(string)
-        if val not in [x / 100 for x in range(31)]:
-            raise argparse.ArgumentTypeError('Must be between 0.00 and 0.30, in 0.01 steps')
-        return val
-
-    parser_um24c = subparsers.add_parser(
-        'um24c',
-        help='RDTech UM24C',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser_um25c = subparsers.add_parser(
-        'um25c',
-        help='RDTech UM25C',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser_um34c = subparsers.add_parser(
-        'um34c',
-        help='RDTech UM34C',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    for parser in (parser_um24c, parser_um25c, parser_um34c):
-        parser.add_argument(
-            '--next-screen', action='store_true',
-            help='Go to the next screen on the display',
-        )
-        parser.add_argument(
-            '--rotate-screen', action='store_true',
-            help='Rotate the screen 90 degrees clockwise',
-        )
-        parser.add_argument(
-            '--clear-data-group', action='store_true',
-            help='Clear the current data group',
-        )
-        parser.add_argument(
-            '--set-record-threshold', type=validate_set_record_threshold, default=None,
-            help='Set the recording threshold, 0.00-0.30 inclusive',
-        )
-        parser.add_argument(
-            '--set-screen-brightness', type=int, choices=range(6), default=None,
-            help='Set the screen brightness',
-        )
-        parser.add_argument(
-            '--set-screen-timeout', type=int, choices=range(10), default=None,
-            help='Set the screen timeout',
-        )
-
-    for parser in (parser_um25c, parser_um34c):
-        parser.add_argument(
-            '--previous-screen', action='store_true',
-            help='Go to the previous screen on the display',
-        )
-        parser.add_argument(
-            '--set-data-group', type=int, choices=range(10), default=None,
-            help='Set the selected data group',
-        )
-
-    for parser in (parser_um24c,):
-        parser.add_argument(
-            '--next-data-group', action='store_true',
-            help='Change to the next data group',
-        )
+supported_devices = ['um24c', 'um25c', 'um34c']
 
 
 class Tool:
@@ -135,7 +71,7 @@ class Tool:
             rdserial.um.CHARGING_DCP1_5A: 'DCP 1.5A',
             rdserial.um.CHARGING_SAMSUNG: 'Samsung',
         }
-        if self.args.command == 'um25c':
+        if self.args.device == 'um25c':
             usb_format = 'USB: {:5.03f}V{}, {:6.04f}A{}, {:6.03f}W{}, {:6.01f}Ω{}'
         else:
             usb_format = 'USB: {:5.02f}V{}, {:6.03f}A{}, {:6.03f}W{}, {:6.01f}Ω{}'
@@ -200,7 +136,7 @@ class Tool:
         ))
 
         print('{:>5s}, temperature: {:3d}C{} ({:3d}F{})'.format(
-            self.args.command.upper(),
+            self.args.device.upper(),
             response.temp_c,
             self.trend_s('temp_c', response.temp_c),
             response.temp_f,
@@ -247,13 +183,13 @@ class Tool:
                     self.print_json(rdserial.um.Response(
                         self.socket.recv(130),
                         collection_time=datetime.datetime.now(),
-                        device_type=self.args.command.upper(),
+                        device_type=self.args.device.upper(),
                     ))
                 else:
                     self.print_human(rdserial.um.Response(
                         self.socket.recv(130),
                         collection_time=datetime.datetime.now(),
-                        device_type=self.args.command.upper(),
+                        device_type=self.args.device.upper(),
                     ))
             except KeyboardInterrupt:
                 raise

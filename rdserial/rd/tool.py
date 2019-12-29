@@ -21,83 +21,12 @@ import json
 import datetime
 import time
 import statistics
-import argparse
 
 import rdserial.rd
 import rdserial.modbus
 
 
-def add_subparsers(subparsers):
-    def loose_bool(val):
-        return val.lower() in ('on', 'true', 'yes')
-
-    parser = subparsers.add_parser(
-        'rd',
-        help='RDTech RD series',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    parser.add_argument(
-        '--modbus-unit', type=int, default=1,
-        help='Modbus unit number',
-    )
-    parser.add_argument(
-        '--group', type=int, action='append',
-        help='Display/set selected group(s)',
-    )
-    parser.add_argument(
-        '--all-groups', action='store_true',
-        help='Display/set all groups',
-    )
-
-    parser.add_argument(
-        '--set-volts', type=float, default=None,
-        help='Set voltage setting',
-    )
-    parser.add_argument(
-        '--set-amps', type=float, default=None,
-        help='Set current setting',
-    )
-
-    onoff_group = parser.add_mutually_exclusive_group(required=False)
-    onoff_group.add_argument(
-        '--set-output-state', type=loose_bool, dest='set_output_state', default=None,
-        help='Set output on/off',
-    )
-    onoff_group.add_argument(
-        '--on', action='store_true', dest='set_output_state',
-        help='Set output on',
-    )
-    onoff_group.add_argument(
-        '--off', action='store_false', dest='set_output_state',
-        help='Set output off',
-    )
-
-    parser.add_argument(
-        '--set-key-lock', type=loose_bool, default=None,
-        help='Set key lock on/off',
-    )
-    parser.add_argument(
-        '--set-brightness', type=int, choices=range(6), default=None,
-        help='Set screen brightness',
-    )
-
-    parser.add_argument(
-        '--set-group-volts', type=float, default=None,
-        help='Set group voltage setting',
-    )
-    parser.add_argument(
-        '--set-group-amps', type=float, default=None,
-        help='Set group current setting',
-    )
-    parser.add_argument(
-        '--set-group-cutoff-volts', type=float, default=None,
-        help='Set group cutoff volts',
-    )
-    parser.add_argument(
-        '--set-group-cutoff-amps', type=float, default=None,
-        help='Set group cutoff amps',
-    )
+supported_devices = ['rd', 'rd6006']
 
 
 class Tool:

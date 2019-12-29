@@ -80,31 +80,25 @@ $ rdserialtool --help
 After the common options, a command is required (commands available are in ```--help``` above).  For example, to get device information from a UM24C via PyBluez:
 
 ```
-$ rdserialtool --bluetooth-address=00:90:72:56:98:D7 um24c
+$ rdserialtool --device=um24c --bluetooth-address=00:90:72:56:98:D7
 ```
 
 Or via pyserial:
 
 ```
-$ rdserialtool --serial-device=/dev/rfcomm0 um24c
+$ rdserialtool --device=um24c --serial-device=/dev/rfcomm0
 ```
 
-After the command, specific command-related options are available.  For example, to see options available for DPS devices:
+To turn the output on for a DPS device:
 
 ```
-$ rdserialtool dps --help
-```
-
-And to turn the output on for a DPS device:
-
-```
-$ rdserialtool --bluetooth-address=00:BA:68:00:47:3A dps --set-output-state=on
+$ rdserialtool --device=dps --bluetooth-address=00:BA:68:00:47:3A --on
 ```
 
 ## Example
 
 ```
-$ rdserialtool --bluetooth-address=00:15:A6:00:36:2F um25c
+$ rdserialtool --device=um25c --bluetooth-address=00:15:A6:00:36:2F
 rdserialtool
 Copyright (C) 2019 Ryan Finnie
 
@@ -126,7 +120,7 @@ Collection time: 2019-02-23 22:53:08.468732
 ```
 
 ```
-$ rdserialtool --bluetooth-address=00:BA:68:00:47:3A dps
+$ rdserialtool --device=dps --bluetooth-address=00:BA:68:00:47:3A
 rdserialtool
 Copyright (C) 2019 Ryan Finnie
 
@@ -142,7 +136,7 @@ Collection time: 2019-02-23 22:55:24.721946
 ```
 
 ```
-$ rdserialtool --serial-device=/dev/ttyUSB0 --baud=115200 rd
+$ rdserialtool --device=rd --serial-device=/dev/ttyUSB0 --baud=115200
 rdserialtool
 Copyright (C) 2019 Ryan Finnie
 
