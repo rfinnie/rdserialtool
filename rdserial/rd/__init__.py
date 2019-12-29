@@ -118,7 +118,13 @@ class DeviceState:
                 'from_int': lambda x: bool(x),
                 'to_int': lambda x: int(x),
             },
-            # 0x13 - 0x20: All 0
+            'group_loader': {
+                'description': 'Group loader',
+                'register': 0x13,
+                'from_int': lambda x: 0,
+                'to_int': lambda x: int(x),
+            },
+            # 0x14 - 0x2f: All 0
             # 0x21: Unknown, 1/2/3 observed
             'temp_c': {
                 'description': 'Temperature (C)',

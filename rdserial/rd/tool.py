@@ -63,6 +63,7 @@ class Tool:
             ('set_output_state', 'output_state'),
             ('set_key_lock', 'key_lock'),
             ('set_brightness', 'brightness'),
+            ('load_group', 'group_loader'),
         )
         group_command_map = (
             ('set_group_volts', 'setting_volts'),
