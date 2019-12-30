@@ -30,9 +30,8 @@ Compatibility
 -   DPS5005 support is complete and tested. Other devices in the DPS
     series (DPS3005, DPS5015, DPS5020, DPS8005, DPH5005) should perform
     identically. (Status reports and bugs welcome.)
--   RD6006 is has basic support and testing. Reading and writing most
-    states work. Group values can be read and written to, but it is not
-    yet possible to load a group as active.
+-   RD6006 has basic support and testing. Reading and writing most
+    states work.
 -   Tested under Python 3.6, but should work with 3.4 or later.
 -   Linux: Tested fine with both PyBluez (direct) and pyserial
     (e.g. /dev/rfcomm0 via rfcomm bind), as well as direct USB serial

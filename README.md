@@ -14,7 +14,7 @@ The RD6006 is a logical continuation of the DPS series and also uses Modbus comm
 
  * UM24C, UM25C and UM34C support is complete and tested.
  * DPS5005 support is complete and tested.  Other devices in the DPS series (DPS3005, DPS5015, DPS5020, DPS8005, DPH5005) should perform identically.  (Status reports and bugs welcome.)
- * RD6006 is has basic support and testing.  Reading and writing most states work.  Group values can be read and written to, but it is not yet possible to load a group as active.
+ * RD6006 has basic support and testing.  Reading and writing most states work.
  * Tested under Python 3.6, but should work with 3.4 or later.
  * Linux: Tested fine with both PyBluez (direct) and pyserial (e.g. /dev/rfcomm0 via ```rfcomm bind```), as well as direct USB serial (e.g. /dev/ttyUSB0) on DPS devices.
  * Windows: Tested fine with pyserial (e.g. COM4 as set up automatically by Windows).  Author could not get PyBluez compiled/installed.

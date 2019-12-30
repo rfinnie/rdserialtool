@@ -26,7 +26,9 @@ import rdserial.dps
 import rdserial.modbus
 
 
-supported_devices = ['dps', 'dps3005', 'dps5005', 'dps5015', 'dps5020', 'dps8005', 'dph5005']
+dps_supported_devices = ['dps', 'dps3005', 'dps5005', 'dps5015', 'dps5020', 'dps8005', 'dph5005']
+rd_supported_devices = ['rd', 'rd6006']
+supported_devices = dps_supported_devices + rd_supported_devices
 
 
 class Tool:
@@ -56,7 +58,7 @@ class Tool:
     def send_commands(self):
         register_commands = {}
 
-        device_state = rdserial.dps.DeviceState()
+        device_state = self.device_state_class()
         command_map = (
             ('set_volts', 'setting_volts'),
             ('set_amps', 'setting_amps'),
@@ -70,11 +72,14 @@ class Tool:
             ('set_group_amps', 'setting_amps'),
             ('set_group_cutoff_volts', 'cutoff_volts'),
             ('set_group_cutoff_amps', 'cutoff_amps'),
-            ('set_group_cutoff_watts', 'cutoff_watts'),
-            ('set_group_brightness', 'brightness'),
-            ('set_group_maintain_output', 'maintain_output'),
-            ('set_group_poweron_output', 'poweron_output'),
         )
+        if self.device_mode == 'dps':
+            group_command_map += (
+                ('set_group_cutoff_watts', 'cutoff_watts'),
+                ('set_group_brightness', 'brightness'),
+                ('set_group_maintain_output', 'maintain_output'),
+                ('set_group_poweron_output', 'poweron_output'),
+            )
 
         for arg_name, register_name in command_map:
             arg_val = getattr(self.args, arg_name)
@@ -99,7 +104,7 @@ class Tool:
         else:
             groups = []
         for group in groups:
-            device_group_state = rdserial.dps.GroupState(group)
+            device_group_state = self.device_group_state_class(group)
 
             for arg_name, register_name in group_command_map:
                 arg_val = getattr(self.args, arg_name)
@@ -171,21 +176,33 @@ class Tool:
             device_state.brightness,
             'on' if device_state.key_lock else 'off',
         ))
-        print('Model: {}, firmware: {}'.format(device_state.model, device_state.firmware))
+        if hasattr(device_state, 'serial'):
+            print('Model: {}, firmware: {}, serial: {}'.format(device_state.model, device_state.firmware, device_state.serial))
+        else:
+            print('Model: {}, firmware: {}'.format(device_state.model, device_state.firmware))
         print('Collection time: {}'.format(device_state.collection_time))
         if len(device_state.groups) > 0:
             print()
         for group, device_group_state in sorted(device_state.groups.items()):
             print('Group {}:'.format(group))
             print('    Setting: {:5.02f}V, {:6.03f}A'.format(device_group_state.setting_volts, device_group_state.setting_amps))
-            print('    Cutoff: {:5.02f}V, {:6.03f}A, {:5.01f}W'.format(
-                device_group_state.cutoff_volts,
-                device_group_state.cutoff_amps,
-                device_group_state.cutoff_watts,
-            ))
-            print('    Brightness: {}/5'.format(device_group_state.brightness))
-            print('    Maintain output state: {}'.format(device_group_state.maintain_output))
-            print('    Output on power-on: {}'.format(device_group_state.poweron_output))
+            if hasattr(device_group_state, 'cutoff_watts'):
+                print('    Cutoff: {:5.02f}V, {:6.03f}A, {:5.01f}W'.format(
+                    device_group_state.cutoff_volts,
+                    device_group_state.cutoff_amps,
+                    device_group_state.cutoff_watts,
+                ))
+            else:
+                print('    Cutoff: {:5.02f}V, {:6.03f}A'.format(
+                    device_group_state.cutoff_volts,
+                    device_group_state.cutoff_amps,
+                ))
+            if hasattr(device_group_state, 'brightness'):
+                print('    Brightness: {}/5'.format(device_group_state.brightness))
+            if hasattr(device_group_state, 'maintain_output'):
+                print('    Maintain output state: {}'.format(device_group_state.maintain_output))
+            if hasattr(device_group_state, 'poweron_output'):
+                print('    Output on power-on: {}'.format(device_group_state.poweron_output))
 
     def print_json(self, device_state):
         out = {x: getattr(device_state, x) for x in device_state.register_properties}
@@ -196,9 +213,10 @@ class Tool:
         print(json.dumps(out, sort_keys=True))
 
     def assemble_device_state(self):
-        device_state = rdserial.dps.DeviceState()
+        device_state = self.device_state_class()
+        registers_length = (85 if self.device_mode == 'rd' else 13)
         registers = self.modbus_client.read_registers(
-            0x00, 13, unit=self.args.modbus_unit,
+            0x00, registers_length, unit=self.args.modbus_unit,
         )
         device_state.load(registers)
 
@@ -209,11 +227,14 @@ class Tool:
         else:
             groups = []
         for group in groups:
-            device_group_state = rdserial.dps.GroupState(group)
+            register_offset = (0x04 if self.device_mode == 'rd' else 0x10)
+            device_group_state = self.device_group_state_class(group)
             registers = self.modbus_client.read_registers(
-                0x50 + (0x10 * group), 8, unit=self.args.modbus_unit
+                0x50 + (register_offset * group),
+                len(device_group_state.register_properties),
+                unit=self.args.modbus_unit,
             )
-            device_group_state.load(registers, offset=(0x50 + (0x10 * group)))
+            device_group_state.load(registers, offset=(0x50 + (register_offset * group)))
             device_state.groups[group] = device_group_state
 
         return device_state
@@ -241,6 +262,14 @@ class Tool:
                 return
 
     def main(self):
+        if self.args.device in rd_supported_devices:
+            self.device_mode = 'rd'
+            self.device_state_class = rdserial.dps.RDDeviceState
+            self.device_group_state_class = rdserial.dps.RDGroupState
+        else:
+            self.device_mode = 'dps'
+            self.device_state_class = rdserial.dps.DPSDeviceState
+            self.device_group_state_class = rdserial.dps.DPSGroupState
         self.modbus_client = rdserial.modbus.RTUClient(
             self.socket,
             baudrate=self.args.baud,

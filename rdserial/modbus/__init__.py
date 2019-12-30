@@ -96,7 +96,9 @@ class RTUClient:
         registers = []
         for i in range(length):
             pos = 3 + (i * 2)
-            registers.append(struct.unpack('>H', response[pos:pos+2])[0])
+            val = struct.unpack('>H', response[pos:pos+2])[0]
+            logging.debug('Register 0x{:02x}: {}'.format(pos, val))
+            registers.append(val)
         return registers
 
     def write_register(self, register, value, unit=1):
