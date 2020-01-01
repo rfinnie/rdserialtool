@@ -24,6 +24,13 @@ PROTECTION_OC = 2
 PROTECTION_OP = 3
 
 
+def _simple_int(multiple=1):
+    return {
+        'from_int': lambda x: x / multiple,
+        'to_int': lambda x: int(x * multiple),
+    }
+
+
 class DPSDeviceState:
     def __init__(self, collection_time=None):
         self.register_properties = {
@@ -318,7 +325,12 @@ class RDDeviceState:
             },
             # 0x26 / 0x27 mAh
             # 0x28 / 0x29 mWh
-            # 0x30 - 0x35 date / time
+            'datetime_year': {'description': 'Year', 'register': 0x30, **_simple_int()},
+            'datetime_month': {'description': 'Month', 'register': 0x31, **_simple_int()},
+            'datetime_day': {'description': 'Day', 'register': 0x32, **_simple_int()},
+            'datetime_hour': {'description': 'Hour', 'register': 0x33, **_simple_int()},
+            'datetime_minute': {'description': 'Minute', 'register': 0x34, **_simple_int()},
+            'datetime_second': {'description': 'Second', 'register': 0x35, **_simple_int()},
             'brightness': {
                 'description': 'Brightness level',
                 'register': 0x48,

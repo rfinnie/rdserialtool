@@ -136,6 +136,10 @@ def parse_args(argv=None):
         '--set-amps', type=float, default=None,
         help='Set current setting',
     )
+    parser_group_dps.add_argument(
+        '--set-clock', action='store_true',
+        help='Set clock to current time [RD]',
+    )
 
     onoff_group = parser_group_dps.add_mutually_exclusive_group(required=False)
     onoff_group.add_argument(

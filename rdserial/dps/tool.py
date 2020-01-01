@@ -97,6 +97,21 @@ class Tool:
             ))
             register_commands[register_num] = register_val
 
+        if getattr(self.args, 'set_clock'):
+            logging.info('Setting device clock')
+            now = datetime.datetime.now()
+            for name in ('year', 'month', 'day', 'hour', 'minute', 'second'):
+                register_name = 'datetime_{}'.format(name)
+                val = getattr(now, name)
+                translation = device_state.register_properties[register_name]['to_int']
+                description = device_state.register_properties[register_name]['description']
+                register_num = device_state.register_properties[register_name]['register']
+                register_val = translation(val)
+                logging.debug('{} "{}" (register {}): {} ({})'.format(
+                    register_name, description, register_num, val, register_val
+                ))
+                register_commands[register_num] = register_val
+
         if self.args.all_groups:
             groups = range(10)
         elif self.args.group is not None:
