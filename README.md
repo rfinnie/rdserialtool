@@ -150,6 +150,15 @@ Brightness: 4/5, key lock: off
 Model: 60062, firmware: 125, serial: 5403
 Collection time: 2019-12-28 21:16:07.114146
 ```
+## GUI
+
+To enable the gui 
+
+```
+rdserialtool --device=rd --serial-device=/dev/ttyUSB0 --baud=115200 --gui
+```
+![GUI in operation](/gui.gif)
+
 
 ## About
 
