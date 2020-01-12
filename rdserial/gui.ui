@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <object class="ttk.Labelframe" id="output">
+    <property name="height">190</property>
+    <property name="text" translatable="yes">Outputs</property>
+    <property name="width">200</property>
+    <layout>
+      <property name="column">0</property>
+      <property name="propagate">True</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Label" id="voltage">
+        <property name="background">#000000</property>
+        <property name="borderwidth">10</property>
+        <property name="font">{DSEG14 Modern} 48 {}</property>
+        <property name="foreground">#00ff00</property>
+        <property name="justify">left</property>
+        <property name="text" translatable="yes">VOLTAGE</property>
+        <property name="width">7</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">1</property>
+          <property name="sticky">w</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Label" id="current">
+        <property name="background">#000000</property>
+        <property name="borderwidth">10</property>
+        <property name="font">{DSEG14 Modern} 48 {}</property>
+        <property name="foreground">#00ff00</property>
+        <property name="justify">left</property>
+        <property name="text" translatable="yes">CURRENT</property>
+        <property name="width">7</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">2</property>
+          <property name="sticky">w</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Label" id="watts">
+        <property name="anchor">e</property>
+        <property name="background">#000000</property>
+        <property name="borderwidth">10</property>
+        <property name="font">{DSEG14 Modern} 48 {}</property>
+        <property name="foreground">#00ff00</property>
+        <property name="justify">right</property>
+        <property name="text" translatable="yes">WATTS</property>
+        <property name="width">7</property>
+        <layout>
+          <property name="column">1</property>
+          <property name="propagate">True</property>
+          <property name="row">1</property>
+          <property name="sticky">e</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Label" id="power">
+        <property name="anchor">e</property>
+        <property name="background">#000000</property>
+        <property name="borderwidth">10</property>
+        <property name="font">{DSEG14 Modern} 48 {}</property>
+        <property name="foreground">#ff0000</property>
+        <property name="justify">right</property>
+        <property name="takefocus">false</property>
+        <property name="text" translatable="yes">OFF</property>
+        <property name="underline">0</property>
+        <property name="width">7</property>
+        <layout>
+          <property name="column">1</property>
+          <property name="propagate">True</property>
+          <property name="row">2</property>
+          <property name="sticky">w</property>
+        </layout>
+      </object>
+    </child>
+  </object>
+</interface>

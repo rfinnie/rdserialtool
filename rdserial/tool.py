@@ -99,6 +99,11 @@ def parse_args(argv=None):
         help='Output JSON data',
     )
     parser.add_argument(
+        '--gui', action='store_true',
+        help='Use a GUI',
+    )
+
+    parser.add_argument(
         '--watch', action='store_true',
         help='Repeat data collection until cancelled',
     )
@@ -270,6 +275,8 @@ class RDSerialTool:
 
         logging.info('rdserialtool {}'.format(__version__))
         logging.info('Copyright (C) 2019 Ryan Finnie')
+        if self.args.gui:
+            logging.info('GUI Copyright (C) 2020 Darren Jones')
         logging.info('')
 
         if self.args.serial_device:

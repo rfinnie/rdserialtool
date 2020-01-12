@@ -22,6 +22,7 @@ import datetime
 import time
 import statistics
 
+from rdserial import __version__
 import rdserial.dps
 import rdserial.modbus
 
@@ -276,6 +277,29 @@ class Tool:
             else:
                 return
 
+    def guiloop(self):
+        while True:
+            try:
+                device_state = self.assemble_device_state()
+                device_state.key_lock = 'off'
+                self.voltage_label.configure(text="{:5.03f}V".format(device_state.volts).replace(".",chr(0xb7)))
+                self.current_label.configure(text="{:5.03f}A".format(device_state.amps).replace(".",chr(0xb7)))
+                self.watts_label.configure(text="{:5.02f}W".format(device_state.watts).replace(".",chr(0xb7)))
+                if device_state.output_state:
+                    if device_state.constant_current:
+                        self.power_label.configure(text="ON (CC)",foreground='#00FF00')
+                    else:
+                        self.power_label.configure(text="ON (CV)",foreground='#00FF00')
+                else:
+                    self.power_label.configure(text="OFF",foreground='#FF0000')
+                self.root.update_idletasks()
+                self.root.update()
+            except Exception:
+                if self.args.watch:
+                    logging.exception('An exception has occurred')
+                else:
+                    raise
+
     def main(self):
         if self.args.device in rd_supported_devices:
             self.device_mode = 'rd'
@@ -289,6 +313,20 @@ class Tool:
             self.socket,
             baudrate=self.args.baud,
         )
+        if self.args.gui:
+            import tkinter as tk
+            import pygubu
+            self.root = tk.Tk()
+            self.root.title('rdserialtool {}'.format(__version__))
+            self.root.resizable(width=False, height=False)
+            self.builder = pygubu.Builder()
+            self.builder.add_from_file('rdserial/gui.ui')
+            self.main_window = self.builder.get_object('output', self.root)
+            self.voltage_label = self.builder.get_object('voltage')
+            self.current_label = self.builder.get_object('current')
+            self.watts_label = self.builder.get_object('watts')
+            self.power_label = self.builder.get_object('power')
+            self.loop = self.guiloop
         try:
             self.send_commands()
             self.loop()
