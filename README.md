@@ -163,6 +163,7 @@ rdserialtool --device=rd --serial-device=/dev/ttyUSB0 --baud=115200 --gui
 ## About
 
 Copyright (C) 2019 Ryan Finnie
+
 GUI Copyright (C) 2020 Darren Jones
 
 > This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
