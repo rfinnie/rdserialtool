@@ -162,6 +162,41 @@ class Tool:
                 register_base, register_commands_opt[register_base], unit=self.args.modbus_unit,
             )
 
+    def send_command(self, command, argument=None):
+        register_commands = {}
+        if command == "power_on":
+            register_commands[0x12] = 1
+
+        if command == "power_off":
+            register_commands[0x12] = 0
+
+        if command == "set_volts":
+            register_commands[0x08] = argument
+
+        if command == "set_current":
+            register_commands[0x09] = argument
+
+        # Optimize into a set of minimal register writes
+        register_commands_opt = {}
+        for register in sorted(register_commands.keys()):
+            found_opt = False
+            for g in register_commands_opt:
+                if (register == g + len(register_commands_opt[g])) and (len(register_commands_opt[g]) < 32):
+                    register_commands_opt[g].append(register_commands[register])
+                    found_opt = True
+                    break
+            if not found_opt:
+                register_commands_opt[register] = [register_commands[register]]
+        for register_base in register_commands_opt:
+            logging.info('Writing {} register(s) ({}) at base {}'.format(
+                len(register_commands_opt[register_base]),
+                register_commands_opt[register_base],
+                register_base,
+            ))
+            self.modbus_client.write_registers(
+                register_base, register_commands_opt[register_base], unit=1,
+            )
+
     def print_human(self, device_state):
         protection_map = {
             rdserial.dps.PROTECTION_GOOD: 'good',
@@ -282,15 +317,18 @@ class Tool:
             try:
                 device_state = self.assemble_device_state()
                 device_state.key_lock = 'off'
-                self.voltage_label.configure(text="{:5.03f}V".format(device_state.volts).replace(".",chr(0xb7)))
-                self.current_label.configure(text="{:5.03f}A".format(device_state.amps/10).replace(".",chr(0xb7)))
-                self.watts_label.configure(text="{:5.02f}W".format(device_state.watts).replace(".",chr(0xb7)))
                 if device_state.output_state:
+                    self.watts_label.configure(text="{:5.02f}W".format(device_state.watts).replace(".",chr(0xb7)),foreground='#00FF00')
+                    self.voltage_label.configure(text="{:5.03f}V".format(device_state.volts).replace(".",chr(0xb7)),foreground='#00FF00')
+                    self.current_label.configure(text="{:5.03f}A".format(device_state.amps/10).replace(".",chr(0xb7)),foreground='#00FF00')
                     if device_state.constant_current:
                         self.power_label.configure(text="ON (CC)",foreground='#00FF00')
                     else:
                         self.power_label.configure(text="ON (CV)",foreground='#00FF00')
                 else:
+                    self.watts_label.configure(text="{:5.02f}V".format(device_state.input_volts).replace(".",chr(0xb7)),foreground='#AF69EE')
+                    self.voltage_label.configure(text="{:5.03f}V".format(device_state.setting_volts).replace(".",chr(0xb7)),foreground='#FFD300')
+                    self.current_label.configure(text="{:5.03f}A".format(device_state.setting_amps).replace(".",chr(0xb7)),foreground='#FFD300')
                     self.power_label.configure(text="OFF",foreground='#FF0000')
                 if self.args.gui_on_top:
                     self.root.lift()
@@ -301,6 +339,46 @@ class Tool:
                     logging.exception('An exception has occurred')
                 else:
                     raise
+
+    def toggle_power(self, event):
+        device_state = self.assemble_device_state()
+        if device_state.output_state:
+            self.send_command('power_off')
+        else:
+            self.send_command('power_on')
+
+    def voltage_up(self, event):
+        device_state = self.assemble_device_state()
+        if device_state.output_state:
+            return
+        else:
+            new_voltage = int(device_state.setting_volts*100)+10
+            self.send_command('set_volts', argument=new_voltage)
+
+    def voltage_down(self, event):
+        device_state = self.assemble_device_state()
+        if device_state.output_state:
+            return
+        else:
+            new_voltage = int(device_state.setting_volts*100)-10
+            self.send_command('set_volts', argument=new_voltage)
+
+    def current_up(self, event):
+        device_state = self.assemble_device_state()
+        if device_state.output_state:
+            return
+        else:
+            new_current = int(device_state.setting_amps*1000)+100
+            self.send_command('set_current', argument=new_current)
+
+    def current_down(self, event):
+        device_state = self.assemble_device_state()
+        if device_state.output_state:
+            return
+        else:
+            new_current = int(device_state.setting_amps*1000)-100
+            self.send_command('set_current', argument=new_current)
+
 
     def main(self):
         if self.args.device in rd_supported_devices:
@@ -326,6 +404,12 @@ class Tool:
             self.main_window = self.builder.get_object('output', self.root)
             self.voltage_label = self.builder.get_object('voltage')
             self.current_label = self.builder.get_object('current')
+            self.voltage_label.bind('<Button-1>',self.toggle_power)
+            self.voltage_label.bind('<Button-4>', self.voltage_up)
+            self.voltage_label.bind('<Button-5>', self.voltage_down)
+            self.current_label.bind('<Button-1>',self.toggle_power)
+            self.current_label.bind('<Button-4>', self.current_up)
+            self.current_label.bind('<Button-5>', self.current_down)
             self.watts_label = self.builder.get_object('watts')
             self.power_label = self.builder.get_object('power')
             self.loop = self.guiloop

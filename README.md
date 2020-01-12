@@ -164,6 +164,7 @@ To make the gui stay on top of other windows
 rdserialtool --device=rd --serial-device=/dev/ttyUSB0 --baud=115200 --gui --gui-on-top
 ```
 
+If you click on the voltage or current it will toggle the power on or off. You can scroll your mouse wheel on the voltage or current to set them when the supply is turned off.
 
 ![GUI in operation](/gui.gif)
 
