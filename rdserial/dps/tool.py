@@ -194,7 +194,7 @@ class Tool:
                 register_base,
             ))
             self.modbus_client.write_registers(
-                register_base, register_commands_opt[register_base], unit=1,
+                register_base, register_commands_opt[register_base], unit=self.args.modbus_unit,
             )
 
     def print_human(self, device_state):
@@ -338,7 +338,7 @@ class Tool:
                 if self.args.watch:
                     logging.exception('An exception has occurred')
                 else:
-                    raise
+                    return
 
     def toggle_power(self, event):
         device_state = self.assemble_device_state()
