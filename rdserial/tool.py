@@ -102,7 +102,10 @@ def parse_args(argv=None):
         '--gui', action='store_true',
         help='Use a GUI',
     )
-
+    parser.add_argument(
+        '--gui-on-top', action='store_true',
+        help='Keep the GUI on top',
+    )
     parser.add_argument(
         '--watch', action='store_true',
         help='Repeat data collection until cancelled',

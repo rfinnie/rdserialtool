@@ -292,6 +292,8 @@ class Tool:
                         self.power_label.configure(text="ON (CV)",foreground='#00FF00')
                 else:
                     self.power_label.configure(text="OFF",foreground='#FF0000')
+                if self.args.gui_on_top:
+                    self.root.lift()
                 self.root.update_idletasks()
                 self.root.update()
             except Exception:

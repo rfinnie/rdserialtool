@@ -157,6 +157,14 @@ To enable the gui
 ```
 rdserialtool --device=rd --serial-device=/dev/ttyUSB0 --baud=115200 --gui
 ```
+
+To make the gui stay on top of other windows 
+
+```
+rdserialtool --device=rd --serial-device=/dev/ttyUSB0 --baud=115200 --gui --gui-on-top
+```
+
+
 ![GUI in operation](/gui.gif)
 
 
