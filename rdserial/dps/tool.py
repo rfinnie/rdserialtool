@@ -283,7 +283,7 @@ class Tool:
                 device_state = self.assemble_device_state()
                 device_state.key_lock = 'off'
                 self.voltage_label.configure(text="{:5.03f}V".format(device_state.volts).replace(".",chr(0xb7)))
-                self.current_label.configure(text="{:5.03f}A".format(device_state.amps).replace(".",chr(0xb7)))
+                self.current_label.configure(text="{:5.03f}A".format(device_state.amps/10).replace(".",chr(0xb7)))
                 self.watts_label.configure(text="{:5.02f}W".format(device_state.watts).replace(".",chr(0xb7)))
                 if device_state.output_state:
                     if device_state.constant_current:
