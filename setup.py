@@ -25,7 +25,7 @@ setup(
     description='RDTech UM/DPS series device interface tool',
     long_description=read('README'),
     version=__version__,
-    license='GPLv2+',
+    license='MPL-2.0',
     platforms=['Unix'],
     author='Ryan Finnie',
     author_email='ryan@finnie.org',
@@ -35,7 +35,7 @@ setup(
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+        'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Scientific/Engineering :: Information Analysis',
