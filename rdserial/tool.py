@@ -230,6 +230,11 @@ def parse_args(argv=None):
         help='Change to the next data group',
     )
 
+    parser.add_argument(
+        '--verbose', action='store_true', default=None,
+        help='Remove some display',
+    )
+
     args = parser.parse_args(args=argv[1:])
 
     return args
@@ -253,26 +258,38 @@ class RDSerialTool:
     def main(self):
         self.args = parse_args()
         self.setup_logging()
-
-        logging.info('rdserialtool {}'.format(__version__))
-        logging.info('Copyright (C) 2019 Ryan Finnie')
-        logging.info('')
-
-        if self.args.serial_device:
-            logging.info('Connecting to {} {}'.format(self.args.device.upper(), self.args.serial_device))
-            self.socket = rdserial.device.Serial(
-                self.args.serial_device,
-                baudrate=self.args.baud,
-            )
+        if self.args.verbose is None:
+            logging.info('rdumtool {}'.format(__version__))
+            logging.info('Copyright (C) 2019 Ryan Finnie')
+            logging.info('')
+            if self.args.serial_device:
+                logging.info('Connecting to {} {}'.format(self.args.device.upper(), self.args.serial_device))
+                self.socket = rdserial.device.Serial(
+                    self.args.serial_device,
+                    baudrate=self.args.baud,
+                )
+            else:
+                logging.info('Connecting to {} {}'.format(self.args.device.upper(), self.args.bluetooth_address))
+                self.socket = rdserial.device.Bluetooth(
+                    self.args.bluetooth_address,
+                    port=self.args.bluetooth_port,
+                )
+            self.socket.connect()
+            logging.info('Connection established')
+            logging.info('')
         else:
-            logging.info('Connecting to {} {}'.format(self.args.device.upper(), self.args.bluetooth_address))
-            self.socket = rdserial.device.Bluetooth(
-                self.args.bluetooth_address,
-                port=self.args.bluetooth_port,
-            )
-        self.socket.connect()
-        logging.info('Connection established')
-        logging.info('')
+            if self.args.serial_device:
+                self.socket = rdserial.device.Serial(
+                    self.args.serial_device,
+                    baudrate=self.args.baud,
+                )
+            else:
+                self.socket = rdserial.device.Bluetooth(
+                    self.args.bluetooth_address,
+                    port=self.args.bluetooth_port,
+                )
+            self.socket.connect()
+        
         time.sleep(self.args.connect_delay)
 
         if self.args.device in rdserial.um.tool.supported_devices:
