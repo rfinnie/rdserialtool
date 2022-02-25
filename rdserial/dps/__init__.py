@@ -35,7 +35,7 @@ class DPSDeviceState:
             'setting_amps': {
                 'description': 'Amperage setting',
                 'register': 0x01,
-                **_simple_int(1000),
+                **_simple_int(100),
             },
             'volts': {
                 'description': 'Output volts',
